@@ -38,7 +38,7 @@
         "font":
         {
             "name": "Rubik",
-            "size": "15",
+            "size": "20",
             "bold": "0",
             "italic": "0",
             "regular_path": "data/fonts/Rubik-Regular.ttf",
@@ -59,66 +59,14 @@
         }
     },
 
-    "@text_entry_labels":
-    {
-        "font":
-        {
-            "name": "Rubik",
-            "size": "15",
-            "bold": "0",
-            "italic": "0"
-        },
-
-        "misc":
-        {
-            "text_horiz_alignment": "left"
-        }
-    },
-
     "@title_labels":
     {
         "font":
         {
             "name": "Rubik",
-            "size": "35",
-            "bold": "0",
+            "size": "20",
+            "bold": "1",
             "italic": "0"
         }
-    },
-
-    "text_entry_line":
-    {
-        "misc":
-        {
-            "shadow_width": "5",
-            "shape": "rounded_rectangle",
-            "shape_corner_radius": "10"
-        },
-
-        "font":
-        {
-            "name": "Rubik",
-            "size": "15",
-            "bold": "0",
-            "italic": "0"
-        }
-    },
-
-    "drop_down_menu":
-     {
-         "misc":
-         {
-            "shadow_width": "5",
-            "shape": "rounded_rectangle",
-            "shape_corner_radius": "10"
-         },
-
-         "font":
-        {
-            "name": "Rubik",
-            "size": "15",
-            "bold": "0",
-            "italic": "0"
-        }
-     }
+    }
 }

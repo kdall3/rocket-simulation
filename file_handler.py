@@ -12,10 +12,10 @@ def save_rocket(rocket, name):
 def get_all_saved_rockets():
     rockets = []
     for filename in os.listdir(rockets_path):
-            filename = os.path.join(rockets_path, filename)
-            if os.path.isfile(filename):
-                with open(filename, 'rb') as f:
-                    rockets.append(pickle.load(f))
+        filename = os.path.join(rockets_path, filename)
+        if os.path.isfile(filename):
+            with open(filename, 'rb') as f:
+                rockets.append(pickle.load(f))
     
     return rockets
 
