@@ -288,7 +288,7 @@ class Editor():
         self.time_unit = 's'
 
         self.create_window()
-    
+
     def create_window(self):
         self.window_dimensions = (1500, 700)
         self.monitor_dimensions = (1920, 1080)
@@ -689,7 +689,9 @@ class Simulation():
         self.create_window()
     
     def create_window(self):
-        self.window_dimensions = (450, 700)
+        self.get_flight_data()
+
+        self.window_dimensions = (450, 450)
         self.monitor_dimensions = (1920, 1080)
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (3*self.monitor_dimensions[0]/4-self.window_dimensions[0]/2, self.monitor_dimensions[1]/2-self.window_dimensions[1]/2)
 
@@ -697,10 +699,6 @@ class Simulation():
 
         self.root = pygame.display.set_mode(self.window_dimensions)
         pygame.display.set_caption('Rocket Simulation')
-
-        self.get_flight_data()
-
-        self.create_graphs()
 
         self.ui_manager = pygame_gui.UIManager(self.window_dimensions, 'data/themes/simulation_theme.json')
 
@@ -712,6 +710,8 @@ class Simulation():
 
         for key in self.flight_info:
             self.flight_info_labels.update({key: pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 85 + list(self.flight_info.keys()).index(key)*50, self.window_dimensions[0], 50), text=f"{key}: {self.flight_info[key]}", manager=self.ui_manager)})
+
+        self.create_graphs()
 
         self.clock = pygame.time.Clock()
 

@@ -76,7 +76,6 @@ class Simulator():
             self.update_flight_data()
 
             if self.altitude < self.altitude_cutoff:
-                print(f"Simulation finished in {time.perf_counter() - t1} seconds")
                 return self.flight_data
 
             self.time += self.time_increment
