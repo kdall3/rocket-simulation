@@ -23,21 +23,8 @@ def get_entry(master, variable, last_value, blacklist=[None, 0]):
         return last_value
 
 
-class Rocket():
-    def __init__(self, name='New Rocket', parts=[]):
-        self.name = name
-        self.parts = parts
-        self.new_part_id = 0
-
-
-class BodyTube():
-    def __init__(self, length=1, diameter=0.3, wall_thickness=0.01, density=1330, colour=(255, 255, 255), part_id=None):
-        self.length = length
-        self.diameter = diameter
-        self.wall_thickness = wall_thickness
-        self.density = density
-        self.mass = self.get_mass()
-
+class RocketPart():
+    def __init__(self, colour=(255, 255, 255), part_id=None):
         self.part_id = part_id
 
         self.colour = colour
@@ -47,6 +34,25 @@ class BodyTube():
         self.mass_override = False
 
         self.hit_box = (0, 0, 0, 0)
+
+
+class Rocket():
+    def __init__(self, name='New Rocket', parts=[]):
+        self.name = name
+        self.parts = parts
+        self.new_part_id = 0
+
+
+class BodyTube(RocketPart):
+    def __init__(self, length=1, diameter=0.3, wall_thickness=0.01, density=1330, mass=None, colour=(255, 255, 255), local_part_id=None):
+        super().__init__(colour, local_part_id)
+
+        self.length = length
+        self.diameter = diameter
+        self.wall_thickness = wall_thickness
+        self.density = density
+        self.mass = self.get_mass()
+
         
     def update_variables(self, master):
         if self.selected:
@@ -85,24 +91,16 @@ class BodyTube():
             pygame.draw.polygon(root, self.colour, self.vertices, line_width)
 
 
-class NoseCone():
-    def __init__(self, cone_shape='conic', length=0.3, diameter=0.3, density=1330, colour=(255, 255, 255), part_id=None):
-        self.cone_shape = cone_shape
+class NoseCone(RocketPart):
+    def __init__(self, cone_shape='conic', length=0.3, diameter=0.3, density=1330, mass=None, colour=(255, 255, 255), local_part_id=None):
+        super().__init__(colour, local_part_id)
 
+        self.cone_shape = cone_shape
         self.length = length
         self.diameter = diameter
         self.density = density
         self.mass = self.get_mass()
 
-        self.part_id = part_id
-
-        self.colour = colour
-
-        self.being_dragged = False
-        self.selected = False
-        self.mass_override = False
-
-        self.hit_box = (0, 0, 0, 0)
     
     def update_variables(self, master):
         if self.selected:
@@ -141,31 +139,26 @@ class NoseCone():
                                                             (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3])], line_width)
 
 
-class Engine():
-    def __init__(self, parent, length=0.5, diameter=0.1, total_mass=1, propellant_mass=0.9, offset=0, average_thrust=100, burn_time=10, colour=(255, 255, 255), part_id=None):
+class Engine(RocketPart):
+    def __init__(self, parent_id=None, length=0.5, diameter=0.1, mass=1, propellant_mass=0.9, offset=0, average_thrust=100, burn_time=10, colour=(255, 255, 255), local_part_id=None):
+        super().__init__(colour, local_part_id)
+
         self.length = length
         self.diameter = diameter
-        self.mass = total_mass
+        self.mass = mass
         self.propellant_mass = propellant_mass
         self.offset = offset
         self.average_thrust = average_thrust
         self.burn_time = burn_time
 
-        self.colour = colour
+        self.parent_id = parent_id
+        self.parent = None
 
-        self.part_id = part_id
 
-        self.parent = parent
-
-        self.being_dragged = False
-        self.selected = False
-        self.mass_override = True
-
-        self.hit_box = (0, 0, 0, 0)
-    
     def update_variables(self, master):
         for part in master.rocket.parts:
-            if part.part_id == self.parent.part_id:
+            if part.part_id == self.parent_id:
+                self.parent_id = part.part_id
                 self.parent = part
 
         if self.selected:
@@ -203,33 +196,26 @@ class Engine():
             pygame.draw.polygon(root, self.colour, self.vertices, line_width)
 
 
-class Fins():
-    def __init__(self, parent, fin_shape='triangle', fin_count=4, length=0.2, thickness=0.05, width=0.1, offset=0, mass=1, colour=(255, 255, 255), part_id=None):
+class Fins(RocketPart):
+    def __init__(self, parent_id=None, fin_shape='triangle', fin_count=4, length=0.2, thickness=0.05, width=0.1, offset=0, mass=1, colour=(255, 255, 255), local_part_id=None):
+        super().__init__(colour, local_part_id)
+
         self.fin_shape = fin_shape
         self.fin_count = fin_count
-
         self.width = width
-
         self.length = length
         self.thickness = thickness
         self.offset = offset
         self.mass = mass
 
-        self.colour = colour
+        self.parent_id = parent_id
+        self.parent = None
 
-        self.part_id = part_id
-
-        self.parent = parent
-
-        self.being_dragged = False
-        self.selected = False
-        self.mass_override = True
-
-        self.hit_box = (0, 0, 0, 0)
     
     def update_variables(self, master):
         for part in master.rocket.parts:
-            if part.part_id == self.parent.part_id:
+            if part.part_id == self.parent_id:
+                self.parent_id = part.part_id
                 self.parent = part
 
         if self.selected:
@@ -266,3 +252,5 @@ class Fins():
                                                                (self.hit_box[0][0] + self.hit_box[0][2], self.hit_box[0][1])], line_width)
                 pygame.draw.polygon(root, self.colour, [(self.hit_box[1][0], self.hit_box[1][1]), (self.hit_box[1][0] + self.hit_box[1][2], self.hit_box[1][1]),
                                                                (self.hit_box[1][0] + self.hit_box[1][2], self.hit_box[1][1] + self.hit_box[1][3])], line_width)
+                
+ROCKET_PARTS = [BodyTube, NoseCone, Engine, Fins]

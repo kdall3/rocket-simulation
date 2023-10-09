@@ -7,7 +7,6 @@ import geometry
 import file_handler
 import rocket_renderer
 import rocket_simulator
-
 from rocket_parts import *
 
 
@@ -502,14 +501,14 @@ class Editor():
         self.deselect_all_parts()
 
         for part in self.rocket.parts:
-            if part.part_id == selected_part.part_id and not part.selected:
+            if part.local_part_id == selected_part.local_part_id and not part.selected:
                 part.selected = True
                 self.open_part_editor(selected_part)
                 break
 
     def deselect_part(self, deselected_part):
         for part in self.rocket.parts:
-            if part.part_id == deselected_part.part_id and part.selected:
+            if part.local_part_id == deselected_part.local_part_id and part.selected:
                 part.selected = False
                 self.close_part_editor()
     
@@ -552,19 +551,19 @@ class Editor():
         RocketLoader('editor', 'editor')
 
     def add_body_tube(self):
-        self.rocket.parts.append(BodyTube(colour=self.part_colour, part_id=self.rocket.new_part_id))
+        self.rocket.parts.append(BodyTube(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
         self.rocket.new_part_id += 1
     
     def add_nose_cone(self):
-        self.rocket.parts.insert(0, NoseCone(colour=self.part_colour, part_id=self.rocket.new_part_id))
+        self.rocket.parts.insert(0, NoseCone(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
         self.rocket.new_part_id += 1
     
     def add_engine(self):
-        self.rocket.parts.append(Engine(self.rocket.parts[self.get_last_body_part_index()], part_id=self.rocket.new_part_id))
+        self.rocket.parts.append(Engine(self.rocket.parts[self.get_last_body_part_index()].local_part_id, local_part_id=self.rocket.new_part_id))
         self.rocket.new_part_id += 1
     
     def add_fins(self):
-        self.rocket.parts.append(Fins(self.rocket.parts[self.get_last_body_part_index()], part_id=self.rocket.new_part_id))
+        self.rocket.parts.append(Fins(self.rocket.parts[self.get_last_body_part_index()].local_part_id, local_part_id=self.rocket.new_part_id))
         self.rocket.new_part_id += 1
 
     def open_info_panel(self):

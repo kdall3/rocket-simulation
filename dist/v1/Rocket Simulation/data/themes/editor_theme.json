@@ -1,0 +1,124 @@
+{
+    "defaults":
+    {
+        "colours":
+        {
+            "normal_bg":"#45494e",
+            "hovered_bg":"#35393e",
+            "disabled_bg":"#25292e",
+            "selected_bg":"#193754",
+            "dark_bg":"rgb(36, 36, 36)",
+            "normal_text":"#c5cbd8",
+            "hovered_text":"#FFFFFF",
+            "selected_text":"#FFFFFF",
+            "disabled_text":"#6d736f",
+            "link_text": "#0000EE",
+            "link_hover": "#2020FF",
+            "link_selected": "#551A8B",
+            "text_shadow": "#777777",
+            "normal_border": "#DDDDDD",
+            "hovered_border": "#B0B0B0",
+            "disabled_border": "#808080",
+            "selected_border": "#8080B0",
+            "active_border": "#8080B0",
+            "filled_bar":"#f4251b",
+            "unfilled_bar":"#CCCCCC"
+        }
+    },
+
+    "button":
+    {
+        "misc":
+        {
+            "shadow_width": "5",
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10"
+        },
+        
+        "font":
+        {
+            "name": "Rubik",
+            "size": "15",
+            "bold": "0",
+            "italic": "0",
+            "regular_path": "data/fonts/Rubik-Regular.ttf",
+            "bold_path": "data/fonts/Rubik-Bold.ttf",
+            "italic_path": "data/fonts/Rubik-Italic.ttf",
+            "bold_italic_path": "data/fonts/Rubik-BoldItalic.ttf"
+        }
+    },
+
+    "label":
+    {
+        "font":
+        {
+            "name": "Rubik",
+            "size": "15",
+            "bold": "0",
+            "italic": "0"
+        }
+    },
+
+    "@text_entry_labels":
+    {
+        "font":
+        {
+            "name": "Rubik",
+            "size": "15",
+            "bold": "0",
+            "italic": "0"
+        },
+
+        "misc":
+        {
+            "text_horiz_alignment": "left"
+        }
+    },
+
+    "@title_labels":
+    {
+        "font":
+        {
+            "name": "Rubik",
+            "size": "35",
+            "bold": "0",
+            "italic": "0"
+        }
+    },
+
+    "text_entry_line":
+    {
+        "misc":
+        {
+            "shadow_width": "5",
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10"
+        },
+
+        "font":
+        {
+            "name": "Rubik",
+            "size": "15",
+            "bold": "0",
+            "italic": "0"
+        }
+    },
+
+    "drop_down_menu":
+     {
+         "misc":
+         {
+            "shadow_width": "5",
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10"
+         },
+
+         "font":
+        {
+            "name": "Rubik",
+            "size": "15",
+            "bold": "0",
+            "italic": "0"
+        }
+     }
+}
