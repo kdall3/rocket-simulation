@@ -24,8 +24,8 @@ def get_entry(master, variable, last_value, blacklist=[None, 0]):
 
 
 class RocketPart():
-    def __init__(self, colour=(255, 255, 255), part_id=None):
-        self.part_id = part_id
+    def __init__(self, colour=(255, 255, 255), local_part_id=None):
+        self.local_part_id = local_part_id
 
         self.colour = colour
 
@@ -152,13 +152,13 @@ class Engine(RocketPart):
         self.burn_time = burn_time
 
         self.parent_id = parent_id
-        self.parent = None
+        self.parent = BodyTube()  # Skeleton object to reference before update_variables is first called
 
 
     def update_variables(self, master):
         for part in master.rocket.parts:
-            if part.part_id == self.parent_id:
-                self.parent_id = part.part_id
+            if part.local_part_id == self.parent_id:
+                self.parent_id = part.local_part_id
                 self.parent = part
 
         if self.selected:
@@ -208,14 +208,16 @@ class Fins(RocketPart):
         self.offset = offset
         self.mass = mass
 
+        print(fin_shape == 'triangle')
+
         self.parent_id = parent_id
-        self.parent = None
+        self.parent = BodyTube() # Skeleton object to reference before update_variables is first called
 
     
     def update_variables(self, master):
         for part in master.rocket.parts:
-            if part.part_id == self.parent_id:
-                self.parent_id = part.part_id
+            if part.local_part_id == self.parent_id:
+                self.parent_id = part.local_part_id
                 self.parent = part
 
         if self.selected:

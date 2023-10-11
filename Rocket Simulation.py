@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 import geometry
-import file_handler
+import db_controller
 import rocket_renderer
 import rocket_simulator
 from rocket_parts import *
@@ -112,7 +112,7 @@ class RocketLoader():
 
         self.bg_colour = (36, 36, 36)
 
-        self.rockets = file_handler.get_all_saved_rockets()
+        self.rockets = db_controller.get_all_saved_rockets()
 
         self.create_window()
     
@@ -202,6 +202,8 @@ class RocketLoader():
         self.ui_manager.update(self.time_delta)
 
     def render(self):
+        
+
         self.root.fill(self.bg_colour)
 
         self.rect_list = []
@@ -250,8 +252,8 @@ class RocketLoader():
     
     def delete_selected_rocket(self):
         if self.selected_index != None:
-            file_handler.delete_rocket(self.rockets[self.selected_index])
-            self.rockets = file_handler.get_all_saved_rockets()
+            db_controller.delete_rocket(self.rockets[self.selected_index])
+            self.rockets = db_controller.get_all_saved_rockets()
             self.selected_index = None
     
     def load_selected_rocket(self):
@@ -404,7 +406,7 @@ class Editor():
                             else:
                                 del self.rocket.parts[original_position +1]
 
-                if event.button == 3: # Right click released
+                elif event.button == 3: # Right click released
                     mouse_pos = pygame.mouse.get_pos()
 
                     if geometry.check_point_in_box(mouse_pos, self.graphic_container):
@@ -543,7 +545,7 @@ class Editor():
 
     def save_design(self):
         self.deselect_all_parts()
-        file_handler.save_rocket(self.rocket, self.rocket.name)
+        db_controller.save_rocket(self.rocket)
     
     def load_design(self):
         self.close()

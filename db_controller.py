@@ -5,7 +5,7 @@ import file_handler
 
 DATABASE = 'rockets.db'
 BLACKLISTED_ATTRIBUTES = ['being_dragged', 'selected', 'mass_override', 'hit_box', 'vertices', 'colour', 'parent']
-INT_ATTRIBUTES = ['part_id', 'parent_id', 'fin_count']
+INT_ATTRIBUTES = ['local_part_id', 'parent_id', 'fin_count']
 TEXT_ATTRIBUTES = ['cone_shape', 'fin_shape']
 
 
@@ -105,17 +105,17 @@ def save_rocket(rocket):
         execute_sql(conn, sql)
 
 
-def delete_rocket(name):
+def delete_rocket(rocket):
     conn = connect(DATABASE)
 
-    sql = f"SELECT rocket_id FROM Rocket WHERE name = '{name}'"
+    sql = f"SELECT rocket_id FROM Rocket WHERE name = '{rocket.name}'"
     c = conn.cursor()
     c.execute(sql)
     rocket_id = c.fetchall()
 
     if len(rocket_id) > 0:
         rocket_id = rocket_id[0][0]
-        sql = f"DELETE FROM Rocket WHERE name = '{name}'"
+        sql = f"DELETE FROM Rocket WHERE name = '{rocket.name}'"
         execute_sql(conn, sql)
 
         for part in ROCKET_PARTS:
@@ -165,6 +165,10 @@ def get_rocket(name):
         location = args.pop('location')
         part = args.pop('part')
         rocket.parts[location] = part(**args)
+    
+    for part in rocket.parts:
+        if isinstance(part, Fins) or isinstance(part, Engine):
+            print(part.parent)
     
     return rocket
 
