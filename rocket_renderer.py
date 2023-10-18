@@ -33,6 +33,6 @@ def render(rocket, root, container, auto_zoom=True, zoom_multiplier=0.95, normal
 
     for part in rocket.parts:
         if hasattr(part, 'render'):
-            part.render(root=root, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=normal_line_width, selected_line_width=selected_line_width)
+            part.render(root=root, rocket=rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=normal_line_width, selected_line_width=selected_line_width)
             if isinstance(part, BodyTube) or isinstance(part, NoseCone):
                 length_rendered += part.length * zoom

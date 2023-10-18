@@ -54,7 +54,7 @@ class BodyTube(RocketPart):
         self.mass = self.get_mass()
 
         
-    def update_variables(self, master):
+    def editor_update_variables(self, master):
         if self.selected:
             self.length = get_entry(master, 'length', self.length)
             self.diameter = get_entry(master, 'diameter', self.diameter)
@@ -69,7 +69,7 @@ class BodyTube(RocketPart):
     def get_mass(self):
         return round(self.density * math.pi * self.length * (self.diameter**2 - (self.diameter - self.wall_thickness)**2) / 4, 10)
     
-    def render(self, root, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width):
+    def render(self, root, rocket, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width):
         if self.selected:
             line_width = selected_line_width
         else:
@@ -102,7 +102,7 @@ class NoseCone(RocketPart):
         self.mass = self.get_mass()
 
     
-    def update_variables(self, master):
+    def editor_update_variables(self, master):
         if self.selected:
             self.length = get_entry(master, 'length', self.length)
             self.diameter = get_entry(master, 'diameter', self.diameter)
@@ -118,7 +118,7 @@ class NoseCone(RocketPart):
         else:
             raise Exception('Invalid cone shape')
 
-    def render(self, root, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width):
+    def render(self, root, rocket, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width):
         if self.selected:
             line_width = selected_line_width
         else:
@@ -155,10 +155,9 @@ class Engine(RocketPart):
         self.parent = BodyTube()  # Skeleton object to reference before update_variables is first called
 
 
-    def update_variables(self, master):
+    def editor_update_variables(self, master):
         for part in master.rocket.parts:
             if part.local_part_id == self.parent_id:
-                self.parent_id = part.local_part_id
                 self.parent = part
 
         if self.selected:
@@ -172,7 +171,11 @@ class Engine(RocketPart):
             if self.mass_override:
                 self.mass = get_entry(master, 'mass', self.mass)
     
-    def render(self, root, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width):
+    def render(self, rocket, root, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width):
+        for part in rocket.parts:
+            if part.local_part_id == self.parent_id:
+                self.parent = part
+
         if self.selected:
             line_width = selected_line_width
         else:
@@ -214,7 +217,7 @@ class Fins(RocketPart):
         self.parent = BodyTube() # Skeleton object to reference before update_variables is first called
 
     
-    def update_variables(self, master):
+    def editor_update_variables(self, master):
         for part in master.rocket.parts:
             if part.local_part_id == self.parent_id:
                 self.parent_id = part.local_part_id
@@ -229,7 +232,11 @@ class Fins(RocketPart):
             if self.mass_override:
                 self.mass = get_entry(master, 'mass', self.mass)
     
-    def render(self, root, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width):
+    def render(self, rocket, root, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width):
+        for part in rocket.parts:
+            if part.local_part_id == self.parent_id:
+                self.parent = part
+        
         if self.selected:
             line_width = selected_line_width
         else:

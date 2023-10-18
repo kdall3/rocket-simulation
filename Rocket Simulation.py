@@ -1,6 +1,7 @@
 import pygame
 import pygame_gui
 import matplotlib.pyplot as plt
+
 import os
 
 import geometry
@@ -8,7 +9,6 @@ import db_controller
 import rocket_renderer
 import rocket_simulator
 from rocket_parts import *
-
 
 class MainMenu():
     def __init__(self):
@@ -202,8 +202,6 @@ class RocketLoader():
         self.ui_manager.update(self.time_delta)
 
     def render(self):
-        
-
         self.root.fill(self.bg_colour)
 
         self.rect_list = []
@@ -540,8 +538,8 @@ class Editor():
     
     def update_all_parts(self):
         for part in self.rocket.parts:
-            if hasattr(part, 'update_variables'):
-                part.update_variables(self)
+            if hasattr(part, 'editor_update_variables'):
+                part.editor_update_variables(self)
 
     def save_design(self):
         self.deselect_all_parts()
@@ -752,18 +750,24 @@ class Simulation():
         self.simulator = rocket_simulator.Simulator(self.rocket)
         self.flight_data = self.simulator.simulate()
 
+        burnout_time = self.flight_data['time'][-1]
         for i, fuel in enumerate(self.flight_data['fuel']):
             if fuel == 0:
                 burnout_time = self.flight_data['time'][i]
                 break
+        
+        # Convert negative values to postive so an absolute maximum value can be found
+        speed = [abs(x) for x in self.flight_data['velocity']]
+        proper_acceleration = [abs(x) for x in self.flight_data['acceleration']]
+        proper_g_force = [abs(x) for x in self.flight_data['g-force']]
 
         self.flight_info = {
             'Total Flight Time': f"{round(self.flight_data['time'][-1], 3)} s",
             'Motor Burnout Time': f"{round(burnout_time, 3)} s",
             'Maximum Altitude': f"{round(max(self.flight_data['altitude']), 3)} m",
-            'Maximum Velocity': f"{round(max(self.flight_data['velocity']), 3)} m/s",
-            'Maximum Acceleration': f"{round(max(self.flight_data['acceleration']), 3)} m/s^2",
-            'Maximum G-Force': f"{round(max(self.flight_data['g-force']), 3)} G's",
+            'Maximum Speed': f"{round(max(speed), 3)} m/s",
+            'Maximum Acceleration': f"{round(max(proper_acceleration), 3)} m/s^2",
+            'Maximum G-Force': f"{round(max(proper_g_force), 3)} G's"
         }
     
     def create_graphs(self):
