@@ -1,7 +1,6 @@
 import sqlite3
 
 from rocket_parts import *
-import file_handler
 
 DATABASE = 'rockets.db'
 BLACKLISTED_ATTRIBUTES = ['being_dragged', 'selected', 'mass_override', 'hit_box', 'vertices', 'colour', 'parent']
