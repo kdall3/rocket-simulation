@@ -147,9 +147,9 @@ def get_rocket(name):
 
     # PARTS
 
-    all_column_names = []
-    all_part_data = []
+    all_args = []
 
+    # Construct an SQL statement for each part type to get all instances of that part type in the database
     for part in ROCKET_PARTS:
         column_names = []
         table_names = ["Rocket"]
@@ -160,30 +160,22 @@ def get_rocket(name):
         conditions.append(f"{part.__name__}.global_part_id = {part.__name__}_line.global_part_id")
         conditions.append(f"{part.__name__}_line.rocket_id = Rocket.rocket_id")
         column_names.append(f"{part.__name__}_line.location")
-        for key in vars(part()).keys():
+        for key in vars(part()).keys():  # Get variables from part class
             if key not in BLACKLISTED_ATTRIBUTES:
                 column_names.append(f"{part.__name__}.{key}")
 
-        sql = f"SELECT {', '.join(column_names)} FROM {', '.join(table_names)} WHERE {' AND '.join(conditions)}"
-        print(sql)
+        sql = f"SELECT DISTINCT {', '.join(column_names)} FROM {', '.join(table_names)} WHERE {' AND '.join(conditions)}"
         part_data = execute_sql(conn, sql)
         part_data = [list(data) for data in part_data]
-        part_data = sum(part_data, []) # Flatten list to 1D
 
-        all_column_names.extend(column_names)
-        all_part_data.extend(part_data)
-    
-    for i, data in enumerate(all_part_data):
-        print(f"{all_column_names[i]} : {data}")
-
-    all_args = []
-    for part in ROCKET_PARTS:
-        args = {'part':part}
-        for i, column_name in enumerate(all_column_names):
-            if column_name.split('.')[0] == part.__name__ or column_name.split('.')[0] == part.__name__ + '_line':
-                args.update({column_name.split('.')[1]:all_part_data[i]}) # dictionary of part params with their values
-
-        all_args.append(args)
+        if len(part_data) > 0:  # Check if there are no parts of that type
+            for individual_part_data in part_data: # Iterate through each instance of a part type
+                args = {'part':part}
+                for i, column_name in enumerate(column_names):
+                    if column_name.split('.')[0] == part.__name__ or column_name.split('.')[0] == part.__name__ + '_line':
+                        args.update({column_name.split('.')[1]:individual_part_data[i]}) # dictionary of part params with their values
+            
+                all_args.append(args)
 
     # ROCKET
 
@@ -192,9 +184,11 @@ def get_rocket(name):
 
     sql = f"SELECT stage, local_part_id FROM Stages, Rocket WHERE Rocket.rocket_id = Stages.rocket_id AND Rocket.name = '{name}'"
     stages_data = execute_sql(conn, sql)
-
-    print("STAGES:")
-    print(stages_data)
+    max_stage = max([stage[0] for stage in stages_data])
+    rocket.stages = [[]]*(max_stage+1)
+    for stage in stages_data:  # DOESNT WORK, IDS GET ADDED TO EVERY STAGE FOR SOME REASON
+        print(stage)
+        rocket.stages[stage[0]].append(stage[1])
 
     # PARTS
 
@@ -204,7 +198,6 @@ def get_rocket(name):
 
     for args in all_args:
         location = args.pop('location')
-        print(location, rocket.parts)
         part = args.pop('part')
         rocket.parts[location] = part(**args)
     
@@ -225,3 +218,5 @@ def get_all_saved_rockets():
         rockets.append(get_rocket(name[0]))
     
     return rockets
+
+get_all_saved_rockets()
