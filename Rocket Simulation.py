@@ -119,7 +119,7 @@ class RocketLoader():
     def create_window(self):
         pygame.init()
 
-        self.rocket_name_font = pygame.font.Font('data/fonts/Rubik-Regular.ttf', 20)
+        self.font = pygame.font.Font('data/fonts/Rubik-Regular.ttf', 20)
 
         self.window_dimensions = (700, 700)
         self.root = pygame.display.set_mode(self.window_dimensions)
@@ -218,9 +218,9 @@ class RocketLoader():
 
                 rocket_visual_container = (rect[0]+rect[2]-200, rect[1]+10, 180, rect[3]-20)
 
-                rocket_renderer.render(rocket, self.root, rocket_visual_container, True, 0.95, 1, 1)
+                rocket_renderer.render(rocket, self.root, rocket_visual_container, self.font, normal_line_width=1, selected_line_width=1)
 
-                name_surface = self.rocket_name_font.render(rocket.name, True, (255, 255, 255))
+                name_surface = self.font.render(rocket.name, True, (255, 255, 255))
                 self.root.blit(name_surface, (rect[0]+10, rect[1]+10))
 
                 self.rect_list.append(rect)
@@ -295,6 +295,8 @@ class Editor():
 
         pygame.init()
 
+        self.font = pygame.font.Font('data/fonts/Rubik-Regular.ttf', 20)
+
         self.root = pygame.display.set_mode(self.window_dimensions)
         pygame.display.set_caption('Rocket Editor')
 
@@ -311,8 +313,9 @@ class Editor():
         self.add_part_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(1250, 10, 200, 50), text='Add New Component', manager=self.ui_manager)
         self.add_body_tube_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1210, 60, 280, 70), text='Body Tube', manager=self.ui_manager)
         self.add_nose_cone_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1210, 140, 280, 70), text='Nose Cone', manager=self.ui_manager)
-        self.add_engine_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1210, 220, 280, 70), text='Engine', manager=self.ui_manager)
-        self.add_fins_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1210, 300, 280, 70), text='Fins', manager=self.ui_manager)
+        self.add_decoupler_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1210, 220, 280, 70), text='Decoupler', manager=self.ui_manager)
+        self.add_engine_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1210, 300, 280, 70), text='Engine', manager=self.ui_manager)
+        self.add_fins_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1210, 380, 280, 70), text='Fins', manager=self.ui_manager)
 
         self.rocket_name_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(1215, 560, 50, 50), text='Name:', object_id=label_object_id, manager=self.ui_manager)
         self.rocket_name_entry = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect(1270, 560, 220, 50), manager=self.ui_manager, initial_text=self.rocket.name)
@@ -374,19 +377,19 @@ class Editor():
 
                     if isinstance(released_part, Engine):
                         for position, part in enumerate(self.rocket.parts):
-                            if geometry.check_point_in_box(mouse_pos, part.hit_box) and is_body_part(part):
-                                released_part.parent = part
+                            if geometry.check_point_in_box(mouse_pos, part.hit_box) and check_part_type(part, [BodyTube, NoseCone, Decoupler]):
+                                released_part.parent_id = part.local_part_id
                         released_part.being_dragged = False
 
                     elif isinstance(released_part, Fins):
                         for position, part in enumerate(self.rocket.parts):
-                            if geometry.check_point_in_box(mouse_pos, part.hit_box) and is_body_part(part):
-                                released_part.parent = part
+                            if geometry.check_point_in_box(mouse_pos, part.hit_box) and check_part_type(part, [BodyTube, NoseCone, Decoupler]):
+                                released_part.parent_id = part.local_part_id
                             released_part.being_dragged = False
 
                     else:
                         for position, part in enumerate(self.rocket.parts):
-                            if is_body_part(part):
+                            if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
                                 centre = geometry.get_box_centre(part.hit_box)
 
                                 if mouse_pos[0] < centre[0] and released_position == None:
@@ -431,6 +434,8 @@ class Editor():
                     self.add_body_tube()
                 elif event.ui_element == self.add_nose_cone_button:
                     self.add_nose_cone()
+                elif event.ui_element == self.add_decoupler_button:
+                    self.add_decoupler()
                 elif event.ui_element == self.add_engine_button:
                     self.add_engine()
                 elif event.ui_element == self.add_fins_button:
@@ -482,7 +487,7 @@ class Editor():
         self.root.fill(self.bg_colour)
 
         self.update_all_parts()
-        rocket_renderer.render(self.rocket, self.root, self.graphic_container, self.auto_zoom, self.zoom_multiplier, self.normal_line_width, self.selected_line_width)
+        rocket_renderer.render(self.rocket, self.root, self.graphic_container, self.font, show_stages=True)
         
         pygame.draw.rect(self.root, (50, 50, 50), self.right_panel_ui_container)
         pygame.draw.rect(self.root, (50, 50, 50), self.left_panel_ui_container)
@@ -526,11 +531,16 @@ class Editor():
             if part.selected:
                 self.deselect_part(part)
                 del self.rocket.parts[position]
+                for stage in self.rocket.stages:
+                    if part.local_part_id in stage:
+                        stage.remove(part.local_part_id)
+                        if len(stage) == 0:
+                            self.rocket.stages.remove(stage)
     
-    def get_last_body_part_index(self):
+    def get_last_part_in_whitelist(self, part_whitelist):
         index = -1
         while True:
-            if is_body_part(self.rocket.parts[index]):
+            if check_part_type(self.rocket.parts[index], part_whitelist):
                 return len(self.rocket.parts) + index
             if abs(index) > len(self.rocket.parts):
                 return 0
@@ -558,12 +568,18 @@ class Editor():
         self.rocket.parts.insert(0, NoseCone(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
         self.rocket.new_part_id += 1
     
+    def add_decoupler(self):
+        self.rocket.parts.append(Decoupler(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
+        self.rocket.stages.append([self.rocket.new_part_id])
+        self.rocket.new_part_id += 1
+      
     def add_engine(self):
-        self.rocket.parts.append(Engine(self.rocket.parts[self.get_last_body_part_index()].local_part_id, local_part_id=self.rocket.new_part_id))
+        self.rocket.parts.append(Engine(self.rocket.parts[self.get_last_part_in_whitelist([BodyTube, NoseCone])].local_part_id, local_part_id=self.rocket.new_part_id))
+        self.rocket.stages.append([self.rocket.new_part_id])
         self.rocket.new_part_id += 1
     
     def add_fins(self):
-        self.rocket.parts.append(Fins(self.rocket.parts[self.get_last_body_part_index()].local_part_id, local_part_id=self.rocket.new_part_id))
+        self.rocket.parts.append(Fins(self.rocket.parts[self.get_last_part_in_whitelist([BodyTube, NoseCone])].local_part_id, local_part_id=self.rocket.new_part_id))
         self.rocket.new_part_id += 1
 
     def open_info_panel(self):
@@ -625,6 +641,14 @@ class Editor():
             self.add_entry_line('density', part.density, self.mass_unit, allowed_digits, 520)
             self.add_entry_line('mass', part.mass, self.mass_unit, allowed_digits, 580)
         
+        elif isinstance(part, Decoupler):
+            self.part_editor_elements.update({'decoupler label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, 300, 50), text=f'Edit Decoupler', manager=self.ui_manager)})
+
+            self.add_entry_line('length', part.length, self.length_unit, allowed_digits, 60)
+            self.add_entry_line('diameter', part.diameter, self.length_unit, allowed_digits, 120)
+
+            self.add_entry_line('mass', part.mass, self.mass_unit, allowed_digits, 580)
+
         elif isinstance(part, Engine):
             self.part_editor_elements.update({'engine label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, 300, 50), text=f'Edit Engine', manager=self.ui_manager)})
 

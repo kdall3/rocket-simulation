@@ -3,14 +3,16 @@ import pygame
 import geometry
 from rocket_parts import *
 
-def render(rocket, root, container, auto_zoom=True, zoom_multiplier=0.95, normal_line_width=2, selected_line_width=5):
+pygame.init()
+
+def render(rocket, root, container, font, auto_zoom=True, zoom_multiplier=0.95, normal_line_width=2, selected_line_width=5, show_stages=False):
     container_centre = geometry.get_box_centre(container)
 
     total_length = 0
     max_diameter = 0
 
     for part in rocket.parts:
-        if is_body_part(part):
+        if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
             total_length += part.length
         if isinstance(part, Fins):
             if part.parent.diameter + 2 * part.width > max_diameter:
@@ -34,5 +36,19 @@ def render(rocket, root, container, auto_zoom=True, zoom_multiplier=0.95, normal
     for part in rocket.parts:
         if hasattr(part, 'render'):
             part.render(root=root, rocket=rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=normal_line_width, selected_line_width=selected_line_width)
-            if isinstance(part, BodyTube) or isinstance(part, NoseCone):
+            
+            if show_stages:
+                current_part_stage = None
+                for stage_number, stage_ids in enumerate(rocket.stages):
+                    if part.local_part_id in stage_ids:
+                        current_part_stage = stage_number
+
+                if current_part_stage is not None:
+                    stage_number_surface = font.render(str(current_part_stage), True, (255, 255, 255))
+                    part_middle = geometry.get_box_centre(part.hit_box)
+
+                    text_rect = stage_number_surface.get_rect(center = part_middle)
+
+                    root.blit(stage_number_surface, text_rect)
+            if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
                 length_rendered += part.length * zoom

@@ -7,14 +7,21 @@ def check_point_in_box(point, rects):
 
         if (point[0] >= box[0][0] and point[0] <= box[1][0]) and (point[1] >= box[0][1] and point[1] <= box[1][1]):
             return True
+        elif (point[0] <= box[0][0] and point[0] >= box[1][0]) and (point[1] <= box[0][1] and point[1] >= box[1][1]):
+            return True
         else:
             return False
+        
     else:  # If there are multiple rects
         for rect in rects:
             box = ((rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]))
 
             if (point[0] >= box[0][0] and point[0] <= box[1][0]) and (point[1] >= box[0][1] and point[1] <= box[1][1]):
                 return True
+            elif (point[0] <= box[0][0] and point[0] >= box[1][0]) and (point[1] <= box[0][1] and point[1] >= box[1][1]):
+                return True
+            else:
+                return False
 
 
 def get_box_centre(box):

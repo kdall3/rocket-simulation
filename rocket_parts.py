@@ -4,10 +4,9 @@ import math
 import geometry
 
 
-def is_body_part(part):
-        body_parts = [BodyTube, NoseCone]
-        for body_part in body_parts:
-            if isinstance(part, body_part):
+def check_part_type(part, part_whitelist):
+        for whitelisted_part in part_whitelist:
+            if isinstance(part, whitelisted_part):
                 return True
         return False
 
@@ -41,6 +40,8 @@ class Rocket():
         self.name = name
         self.parts = parts
         self.new_part_id = 0
+
+        self.stages = [] # List of lists of part ids
 
 
 class BodyTube(RocketPart):
@@ -211,8 +212,6 @@ class Fins(RocketPart):
         self.offset = offset
         self.mass = mass
 
-        print(fin_shape == 'triangle')
-
         self.parent_id = parent_id
         self.parent = BodyTube() # Skeleton object to reference before update_variables is first called
 
@@ -261,5 +260,42 @@ class Fins(RocketPart):
                                                                (self.hit_box[0][0] + self.hit_box[0][2], self.hit_box[0][1])], line_width)
                 pygame.draw.polygon(root, self.colour, [(self.hit_box[1][0], self.hit_box[1][1]), (self.hit_box[1][0] + self.hit_box[1][2], self.hit_box[1][1]),
                                                                (self.hit_box[1][0] + self.hit_box[1][2], self.hit_box[1][1] + self.hit_box[1][3])], line_width)
-                
-ROCKET_PARTS = [BodyTube, NoseCone, Engine, Fins]
+
+
+class Decoupler(RocketPart):
+    def __init__(self, length=0.05, diameter=0.3, mass=0.1, colour=(255, 255, 255), local_part_id=None):
+        super().__init__(colour, local_part_id)
+
+        self.length = length
+        self.diameter = diameter
+        self.mass = mass
+    
+    def editor_update_variables(self, master):
+        if self.selected:
+            self.length = get_entry(master, 'length', self.length)
+            self.diameter = get_entry(master, 'diameter', self.diameter)
+            self.mass = get_entry(master, 'mass', self.mass)
+    
+    def render(self, rocket, root, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width):
+        if self.selected:
+            line_width = selected_line_width
+        else:
+            line_width = normal_line_width
+        
+        if self.being_dragged:
+            mouse_pos = pygame.mouse.get_pos()
+            self.hit_box = (mouse_pos[0] - zoom*self.length/2, mouse_pos[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom)
+            self.vertices = [(self.hit_box[0], self.hit_box[1]), (self.hit_box[0] + self.hit_box[2], self.hit_box[1]), 
+                             (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3]), (self.hit_box[0], self.hit_box[1] + self.hit_box[3])]
+
+            pygame.draw.polygon(root, self.colour, self.vertices, line_width)
+        else:
+            start_x = graphic_centre[0] + length_rendered - total_length/2
+            self.hit_box = (start_x, graphic_centre[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom)
+            self.vertices = [(self.hit_box[0], self.hit_box[1]), (self.hit_box[0] + self.hit_box[2], self.hit_box[1]), 
+                             (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3]), (self.hit_box[0], self.hit_box[1] + self.hit_box[3])]
+
+            pygame.draw.polygon(root, self.colour, self.vertices, line_width)
+
+
+ROCKET_PARTS = [BodyTube, NoseCone, Engine, Fins, Decoupler]

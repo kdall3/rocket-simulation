@@ -35,6 +35,15 @@ def init_db():
     sql = "CREATE TABLE IF NOT EXISTS Rocket (rocket_id INTEGER PRIMARY KEY, name TEXT);"
     execute_sql(conn, sql)
 
+    sql = """CREATE TABLE IF NOT EXISTS Stages (
+            rocket_id INTEGER, 
+            stage INTEGER, 
+            local_part_id INTEGER,
+            FOREIGN KEY (rocket_id) REFERENCES Rocket (rocket_id),
+            PRIMARY KEY (rocket_id, stage, local_part_id)
+        );"""
+    execute_sql(conn, sql)
+
     for rocket_part in ROCKET_PARTS:
         attributes = vars(rocket_part()).keys()
         attributes_to_save = []
@@ -53,13 +62,13 @@ def init_db():
         execute_sql(conn, sql)
 
         sql = f"""CREATE TABLE IF NOT EXISTS {rocket_part.__name__}_line (
-                            global_part_id INTEGER,
-                            rocket_id INTEGER,
-                            location INTEGER,
-                            FOREIGN KEY (global_part_id) REFERENCES {rocket_part.__name__}, 
-                            FOREIGN KEY (rocket_id) REFERENCES Rocket (rocket_id),
-                            PRIMARY KEY (global_part_id, rocket_id)
-                );"""
+                global_part_id INTEGER,
+                rocket_id INTEGER,
+                location INTEGER,
+                FOREIGN KEY (global_part_id) REFERENCES {rocket_part.__name__}, 
+                FOREIGN KEY (rocket_id) REFERENCES Rocket (rocket_id),
+                PRIMARY KEY (global_part_id, rocket_id)
+            );"""
         execute_sql(conn, sql)
 
 
@@ -85,8 +94,13 @@ def reset_db():
 def save_rocket(rocket):
     conn = connect(DATABASE)
 
-    sql = f"INSERT INTO Rocket (rocket_id, name) VALUES((SELECT MAX(rocket_id) FROM Rocket) + 1, '{rocket.name}')" # (SELECT MAX(rocket_id) FROM Rocket) + 1
+    sql = f"INSERT INTO Rocket (rocket_id, name) VALUES((SELECT MAX(rocket_id) FROM Rocket) + 1, '{rocket.name}')"
     execute_sql(conn, sql)
+
+    for stage_number, stage in enumerate(rocket.stages):
+        for part_id in stage:
+            sql = f"INSERT INTO Stages (rocket_id, stage, local_part_id) VALUES((SELECT MAX(rocket_id) FROM Rocket), {stage_number}, {part_id})"
+            execute_sql(conn, sql)
 
     for index, part in enumerate(rocket.parts):
         part_data = []
@@ -117,6 +131,9 @@ def delete_rocket(rocket):
         sql = f"DELETE FROM Rocket WHERE name = '{rocket.name}'"
         execute_sql(conn, sql)
 
+        sql = f"DELETE FROM Stages WHERE rocket_id = {rocket_id}"
+        execute_sql(conn, sql)
+
         for part in ROCKET_PARTS:
             sql = f"DELETE FROM {part.__name__} WHERE {part.__name__}.global_part_id = (SELECT {part.__name__}_line.global_part_id FROM {part.__name__}_line WHERE {part.__name__}_line.rocket_id = {rocket_id})"
             execute_sql(conn, sql)
@@ -128,10 +145,16 @@ def delete_rocket(rocket):
 def get_rocket(name):
     conn = connect(DATABASE)
 
-    column_names = []
-    table_names = ["Rocket"]
-    conditions = [f"Rocket.name = '{name}'"]
+    # PARTS
+
+    all_column_names = []
+    all_part_data = []
+
     for part in ROCKET_PARTS:
+        column_names = []
+        table_names = ["Rocket"]
+        conditions = [f"Rocket.name = '{name}'"]
+    
         table_names.append(part.__name__)
         table_names.append(part.__name__ + "_line")
         conditions.append(f"{part.__name__}.global_part_id = {part.__name__}_line.global_part_id")
@@ -141,33 +164,49 @@ def get_rocket(name):
             if key not in BLACKLISTED_ATTRIBUTES:
                 column_names.append(f"{part.__name__}.{key}")
 
-    sql = f"SELECT {', '.join(column_names)} FROM {', '.join(table_names)} WHERE {' AND '.join(conditions)}"
-    data = execute_sql(conn, sql)[0]
+        sql = f"SELECT {', '.join(column_names)} FROM {', '.join(table_names)} WHERE {' AND '.join(conditions)}"
+        print(sql)
+        part_data = execute_sql(conn, sql)
+        part_data = [list(data) for data in part_data]
+        part_data = sum(part_data, []) # Flatten list to 1D
 
-    data_dict = {}
-    for i, column in enumerate(column_names):
-        data_dict.update({column:data[i]})
+        all_column_names.extend(column_names)
+        all_part_data.extend(part_data)
+    
+    for i, data in enumerate(all_part_data):
+        print(f"{all_column_names[i]} : {data}")
 
     all_args = []
     for part in ROCKET_PARTS:
         args = {'part':part}
-        for i, column in enumerate(column_names):
-            if column.split('.')[0] == part.__name__ or column.split('.')[0] == part.__name__ + "_line":
-                args.update({column.split('.')[1]:data[i]})
+        for i, column_name in enumerate(all_column_names):
+            if column_name.split('.')[0] == part.__name__ or column_name.split('.')[0] == part.__name__ + '_line':
+                args.update({column_name.split('.')[1]:all_part_data[i]}) # dictionary of part params with their values
 
         all_args.append(args)
+
+    # ROCKET
 
     rocket = Rocket(name=name)
     rocket.parts = [None] * len(all_args)
 
+    sql = f"SELECT stage, local_part_id FROM Stages, Rocket WHERE Rocket.rocket_id = Stages.rocket_id AND Rocket.name = '{name}'"
+    stages_data = execute_sql(conn, sql)
+
+    print("STAGES:")
+    print(stages_data)
+
+    # PARTS
+
+    for part in ROCKET_PARTS:
+        column_names = []
+
+
     for args in all_args:
         location = args.pop('location')
+        print(location, rocket.parts)
         part = args.pop('part')
         rocket.parts[location] = part(**args)
-    
-    for part in rocket.parts:
-        if isinstance(part, Fins) or isinstance(part, Engine):
-            print(part.parent)
     
     return rocket
 
@@ -186,14 +225,3 @@ def get_all_saved_rockets():
         rockets.append(get_rocket(name[0]))
     
     return rockets
-
-
-# reset_db()
-# rocket = file_handler.get_all_saved_rockets()[0]
-# rocket.name = rocket.name + " 2"
-# save_rocket(rocket)
-# get_rocket('New Rocket')
-
-# delete_rocket("New Rocket")
-
-# print(get_all_saved_rockets())
