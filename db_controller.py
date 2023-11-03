@@ -145,6 +145,10 @@ def delete_rocket(rocket):
 def get_rocket(name):
     conn = connect(DATABASE)
 
+    # ROCKET
+
+    rocket = Rocket(name=name)
+
     # PARTS
 
     all_args = []
@@ -176,30 +180,28 @@ def get_rocket(name):
                         args.update({column_name.split('.')[1]:individual_part_data[i]}) # dictionary of part params with their values
             
                 all_args.append(args)
-
-    # ROCKET
-
-    rocket = Rocket(name=name)
+    
     rocket.parts = [None] * len(all_args)
-
-    sql = f"SELECT stage, local_part_id FROM Stages, Rocket WHERE Rocket.rocket_id = Stages.rocket_id AND Rocket.name = '{name}'"
-    stages_data = execute_sql(conn, sql)
-    max_stage = max([stage[0] for stage in stages_data])
-    rocket.stages = [[]]*(max_stage+1)
-    for stage in stages_data:  # DOESNT WORK, IDS GET ADDED TO EVERY STAGE FOR SOME REASON
-        print(stage)
-        rocket.stages[stage[0]].append(stage[1])
-
-    # PARTS
 
     for part in ROCKET_PARTS:
         column_names = []
-
 
     for args in all_args:
         location = args.pop('location')
         part = args.pop('part')
         rocket.parts[location] = part(**args)
+    
+    # STAGES
+
+    sql = f"SELECT stage, local_part_id FROM Stages, Rocket WHERE Rocket.rocket_id = Stages.rocket_id AND Rocket.name = '{name}'"
+    stages_data = execute_sql(conn, sql)
+    stages_data = [list(stage) for stage in stages_data]
+    max_stage = max([stage[0] for stage in stages_data])
+    rocket.stages = [[] for _ in range(max_stage+1)]
+    for stage in stages_data:  # DOESNT WORK, IDS GET ADDED TO EVERY STAGE FOR SOME REASON
+        stage_num = stage[0]
+        part_id = stage[1]
+        rocket.stages[stage_num].append(part_id)
     
     return rocket
 
@@ -218,5 +220,3 @@ def get_all_saved_rockets():
         rockets.append(get_rocket(name[0]))
     
     return rockets
-
-get_all_saved_rockets()

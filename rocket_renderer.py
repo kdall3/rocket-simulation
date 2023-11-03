@@ -5,7 +5,7 @@ from rocket_parts import *
 
 pygame.init()
 
-def render(rocket, root, container, font, auto_zoom=True, zoom_multiplier=0.95, normal_line_width=2, selected_line_width=5, show_stages=False):
+def render(rocket, root, container, font=None, auto_zoom=True, zoom_multiplier=0.95, normal_line_width=2, selected_line_width=5, show_stages=False):
     container_centre = geometry.get_box_centre(container)
 
     total_length = 0
@@ -37,7 +37,7 @@ def render(rocket, root, container, font, auto_zoom=True, zoom_multiplier=0.95, 
         if hasattr(part, 'render'):
             part.render(root=root, rocket=rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=normal_line_width, selected_line_width=selected_line_width)
             
-            if show_stages:
+            if show_stages and font is not None:
                 current_part_stage = None
                 for stage_number, stage_ids in enumerate(rocket.stages):
                     if part.local_part_id in stage_ids:
