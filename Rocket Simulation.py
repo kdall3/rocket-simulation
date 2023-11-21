@@ -479,6 +479,31 @@ class Editor():
                 except AttributeError:
                     pass
 
+                try:
+                    if event.ui_element == self.part_editor_elements['stage entry']:
+                        part = self.get_selected_part()
+                        entered_stage = int(self.part_editor_elements['stage entry'].get_text())
+
+                        # Add part to stages
+                        if entered_stage < len(self.rocket.stages):
+                            len_before_delete = len(self.rocket.stages)
+                            self.delete_part_from_stages(part)
+                            if len_before_delete == len(self.rocket.stages): # Check whether a stage number has been deleted
+                                self.rocket.stages[entered_stage].append(part.local_part_id)
+                            else:
+                                self.rocket.stages[entered_stage-1].append(part.local_part_id)
+                            
+                        elif entered_stage >= len(self.rocket.stages):
+                            self.delete_part_from_stages(part)
+                            self.rocket.stages.append([part.local_part_id])
+                            self.self.part_editor_elements['stage entry'].set_text(str(len(self.rocket.stages)))
+                        
+                        print(self.rocket.stages)
+                except:
+                    pass
+
+
+
             self.ui_manager.process_events(event)
         
         self.ui_manager.update(self.time_delta)
@@ -522,6 +547,12 @@ class Editor():
             if part.selected:
                 return part
     
+    def get_part_stage(self, part):
+        for stage_num, stage in enumerate(self.rocket.stages):
+            if part.local_part_id in stage:
+                return stage_num
+        return None
+    
     def deselect_all_parts(self):
         for part in self.rocket.parts:
             self.deselect_part(part)
@@ -531,11 +562,14 @@ class Editor():
             if part.selected:
                 self.deselect_part(part)
                 del self.rocket.parts[position]
-                for stage in self.rocket.stages:
-                    if part.local_part_id in stage:
-                        stage.remove(part.local_part_id)
-                        if len(stage) == 0:
-                            self.rocket.stages.remove(stage)
+                self.delete_part_from_stages(part)
+    
+    def delete_part_from_stages(self, part):
+        for stage in self.rocket.stages:
+            if part.local_part_id in stage:
+                stage.remove(part.local_part_id)
+                if len(stage) == 0:
+                    self.rocket.stages.remove(stage)
     
     def get_last_part_in_whitelist(self, part_whitelist):
         index = -1
@@ -616,7 +650,8 @@ class Editor():
     def open_part_editor(self, part):
         self.close_info_panel()
 
-        allowed_digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
+        int_whitelist = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+        float_whitelist = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
 
         self.part_editor_elements = {}
 
@@ -625,51 +660,53 @@ class Editor():
         if isinstance(part, BodyTube):
             self.part_editor_elements.update({'body tube label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, 300, 50), text=f'Edit Body Tube', manager=self.ui_manager)})
 
-            self.add_entry_line('length', part.length, self.length_unit, allowed_digits, 60)
-            self.add_entry_line('diameter', part.diameter, self.length_unit, allowed_digits, 120)
-            self.add_entry_line('wall thickness', part.wall_thickness, self.length_unit, allowed_digits, 180)
+            self.add_entry_line('length', part.length, self.length_unit, float_whitelist, 60)
+            self.add_entry_line('diameter', part.diameter, self.length_unit, float_whitelist, 120)
+            self.add_entry_line('wall thickness', part.wall_thickness, self.length_unit, float_whitelist, 180)
 
-            self.add_entry_line('density', part.density, self.mass_unit, allowed_digits, 520)
-            self.add_entry_line('mass', part.mass, self.mass_unit, allowed_digits, 580)
+            self.add_entry_line('density', part.density, self.mass_unit, float_whitelist, 520)
+            self.add_entry_line('mass', part.mass, self.mass_unit, float_whitelist, 580)
 
         elif isinstance(part, NoseCone):
             self.part_editor_elements.update({'nose cone label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, 300, 50), text=f'Edit Nose Cone', manager=self.ui_manager)})
 
-            self.add_entry_line('length', part.length, self.length_unit, allowed_digits, 60)
-            self.add_entry_line('diameter', part.diameter, self.length_unit, allowed_digits, 120)
+            self.add_entry_line('length', part.length, self.length_unit, float_whitelist, 60)
+            self.add_entry_line('diameter', part.diameter, self.length_unit, float_whitelist, 120)
 
-            self.add_entry_line('density', part.density, self.mass_unit, allowed_digits, 520)
-            self.add_entry_line('mass', part.mass, self.mass_unit, allowed_digits, 580)
+            self.add_entry_line('density', part.density, self.mass_unit, float_whitelist, 520)
+            self.add_entry_line('mass', part.mass, self.mass_unit, float_whitelist, 580)
         
         elif isinstance(part, Decoupler):
             self.part_editor_elements.update({'decoupler label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, 300, 50), text=f'Edit Decoupler', manager=self.ui_manager)})
 
-            self.add_entry_line('length', part.length, self.length_unit, allowed_digits, 60)
-            self.add_entry_line('diameter', part.diameter, self.length_unit, allowed_digits, 120)
+            self.add_entry_line('length', part.length, self.length_unit, float_whitelist, 60)
+            self.add_entry_line('diameter', part.diameter, self.length_unit, float_whitelist, 120)
 
-            self.add_entry_line('mass', part.mass, self.mass_unit, allowed_digits, 580)
+            self.add_entry_line('mass', part.mass, self.mass_unit, float_whitelist, 530)
+            self.add_entry_line('stage', str(self.get_part_stage(part)), '', int_whitelist, 590)
 
         elif isinstance(part, Engine):
             self.part_editor_elements.update({'engine label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, 300, 50), text=f'Edit Engine', manager=self.ui_manager)})
 
-            self.add_entry_line('length', part.length, self.length_unit, allowed_digits, 60)
-            self.add_entry_line('diameter', part.diameter, self.length_unit, allowed_digits, 120)
-            self.add_entry_line('offset', part.offset, self.length_unit, allowed_digits + ['-'], 180)
-            self.add_entry_line('average thrust', part.average_thrust, self.force_unit, allowed_digits, 240)
-            self.add_entry_line('burn time', part.burn_time, self.time_unit, allowed_digits, 300)
+            self.add_entry_line('length', part.length, self.length_unit, float_whitelist, 60)
+            self.add_entry_line('diameter', part.diameter, self.length_unit, float_whitelist, 120)
+            self.add_entry_line('offset', part.offset, self.length_unit, float_whitelist + ['-'], 180)
+            self.add_entry_line('average thrust', part.average_thrust, self.force_unit, float_whitelist, 240)
+            self.add_entry_line('burn time', part.burn_time, self.time_unit, float_whitelist, 300)
 
-            self.add_entry_line('propellant mass', part.propellant_mass, self.mass_unit, allowed_digits, 520)
-            self.add_entry_line('mass', part.mass, self.mass_unit, allowed_digits, 580)
+            self.add_entry_line('propellant mass', part.propellant_mass, self.mass_unit, float_whitelist, 470)
+            self.add_entry_line('mass', part.mass, self.mass_unit, float_whitelist, 530)
+            self.add_entry_line('stage', str(self.get_part_stage(part)), '', int_whitelist, 590)
         
         elif isinstance(part, Fins):
             self.part_editor_elements.update({'fins label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, 300, 50), text=f'Edit Fins', manager=self.ui_manager)})
 
-            self.add_entry_line('length', part.length, self.length_unit, allowed_digits, 60)
-            self.add_entry_line('width', part.width, self.length_unit, allowed_digits, 120)
-            self.add_entry_line('thickness', part.thickness, self.length_unit, allowed_digits, 180)
-            self.add_entry_line('offset', part.offset, self.length_unit, allowed_digits + ['-'], 240)
+            self.add_entry_line('length', part.length, self.length_unit, float_whitelist, 60)
+            self.add_entry_line('width', part.width, self.length_unit, float_whitelist, 120)
+            self.add_entry_line('thickness', part.thickness, self.length_unit, float_whitelist, 180)
+            self.add_entry_line('offset', part.offset, self.length_unit, float_whitelist + ['-'], 240)
 
-            self.add_entry_line('mass', part.mass, self.mass_unit, allowed_digits, 580)
+            self.add_entry_line('mass', part.mass, '', float_whitelist, 580)
 
     def add_entry_line(self, variable, initial_text, unit, allowed_characters, start_y):
         label_start_x = 10
@@ -689,7 +726,7 @@ class Editor():
         label_object_id = pygame_gui.core.ObjectID(class_id='@text_entry_labels')
 
         self.part_editor_elements.update({f'{variable} label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(label_start_x, start_y, label_width, label_height), manager=self.ui_manager, text=f'{variable.capitalize()}:', object_id=label_object_id)})
-        self.part_editor_elements.update({f'{variable} entry': pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect(entry_start_x, start_y, entry_width, entry_height), manager=self.ui_manager, initial_text=str(float(initial_text)))})
+        self.part_editor_elements.update({f'{variable} entry': pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect(entry_start_x, start_y, entry_width, entry_height), manager=self.ui_manager, initial_text=str(initial_text))})
         self.part_editor_elements[f'{variable} entry'].allowed_characters = allowed_characters
         self.part_editor_elements[f'{variable} entry'].length_limit = length_limit
         self.part_editor_elements.update({f'{variable} unit label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(unit_start_x, start_y, unit_width, unit_height), manager=self.ui_manager, text=unit, object_id=label_object_id)})
