@@ -94,6 +94,14 @@ def reset_db():
 def save_rocket(rocket):
     conn = connect(DATABASE)
 
+    # Check if rocket already exists
+
+    sql = f"SELECT name FROM Rocket WHERE Rocket.name = '{rocket.name}'"
+    existing_rockets = execute_sql(conn, sql)
+
+    if len(existing_rockets) > 0:
+        delete_rocket(Rocket(name=rocket.name))
+
     sql = f"INSERT INTO Rocket (rocket_id, name) VALUES((SELECT MAX(rocket_id) FROM Rocket) + 1, '{rocket.name}')"
     execute_sql(conn, sql)
 

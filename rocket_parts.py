@@ -11,6 +11,17 @@ def check_part_type(part, part_whitelist):
         return False
 
 
+def get_children(master_part, rocket):
+    children = []
+
+    for part in rocket.parts:
+        if hasattr(part, 'parent_id'):
+            if part.parent_id == master_part.local_part_id:
+                children.append(part)
+    
+    return children
+
+
 def get_entry(master, variable, last_value, blacklist=[None, 0]):
     entry = master.part_editor_elements[f'{variable} entry'].get_text()
     try:
