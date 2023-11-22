@@ -218,7 +218,7 @@ class RocketLoader():
 
                 rocket_visual_container = (rect[0]+rect[2]-200, rect[1]+10, 180, rect[3]-20)
 
-                rocket_renderer.render(rocket, self.root, rocket_visual_container, self.font, normal_line_width=1, selected_line_width=1)
+                rocket_renderer.render_rocket_editor(rocket, self.root, rocket_visual_container, self.font, normal_line_width=1, selected_line_width=1)
 
                 name_surface = self.font.render(rocket.name, True, (255, 255, 255))
                 self.root.blit(name_surface, (rect[0]+10, rect[1]+10))
@@ -499,10 +499,8 @@ class Editor():
                             self.self.part_editor_elements['stage entry'].set_text(str(len(self.rocket.stages)))
                         
                         print(self.rocket.stages)
-                except:
+                except Exception:
                     pass
-
-
 
             self.ui_manager.process_events(event)
         
@@ -512,7 +510,7 @@ class Editor():
         self.root.fill(self.bg_colour)
 
         self.update_all_parts()
-        rocket_renderer.render(self.rocket, self.root, self.graphic_container, self.font, show_stages=True)
+        rocket_renderer.render_rocket_editor(self.rocket, self.root, self.graphic_container, self.font, show_stages=True)
         
         pygame.draw.rect(self.root, (50, 50, 50), self.right_panel_ui_container)
         pygame.draw.rect(self.root, (50, 50, 50), self.left_panel_ui_container)

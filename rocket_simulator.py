@@ -122,6 +122,7 @@ class Simulator():
                         elif isinstance(part_in_stage, Engine):
                             self.engine = part_in_stage
                             self.fuel = 1
+                            self.thrust = self.engine.average_thrust
 
             else: # Engine burning all the way during the time step
                 self.thrust = self.engine.average_thrust

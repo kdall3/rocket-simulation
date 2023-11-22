@@ -1,11 +1,8 @@
-import pygame
-
 import geometry
 from rocket_parts import *
 
-pygame.init()
-
-def render(rocket, root, container, font=None, auto_zoom=True, zoom_multiplier=0.95, normal_line_width=2, selected_line_width=5, show_stages=False):
+# Render a frame of the rocket pointed to the right
+def render_rocket_editor(rocket, root, container, font=None, auto_zoom=True, zoom_multiplier=0.95, normal_line_width=2, selected_line_width=5, show_stages=False):
     container_centre = geometry.get_box_centre(container)
 
     total_length = 0
@@ -52,3 +49,25 @@ def render(rocket, root, container, font=None, auto_zoom=True, zoom_multiplier=0
                     root.blit(stage_number_surface, text_rect)
             if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
                 length_rendered += part.length * zoom
+
+
+def render_rocket_simulation(rocket, current_flight_data, root, container, zoom_multiplier=0.95, line_width=2):
+    container_centre = geometry.get_box_centre(container)
+
+    total_length = 0
+    max_diameter = 0
+
+    for part in rocket.parts:
+        if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
+            total_length += part.length
+        if isinstance(part, Fins):
+            if part.parent.diameter + 2 * part.width > max_diameter:
+                max_diameter = part.parent.diameter + 2 * part.width
+        else:
+            if part.diameter > max_diameter:
+                max_diameter = part.diameter
+
+    try:
+        zoom = zoom_multiplier * min(container[3:4]) / max([total_length, max_diameter])
+    except ZeroDivisionError:
+        zoom = 1
