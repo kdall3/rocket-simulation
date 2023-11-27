@@ -42,7 +42,7 @@ def render_rocket_editor(rocket, root, container, font=None, auto_zoom=True, zoo
 
                 if current_part_stage is not None:
                     stage_number_surface = font.render(str(current_part_stage), True, (255, 255, 255))
-                    part_middle = geometry.get_box_centre(part.hit_box)
+                    part_middle = geometry.get_centroid_poly(part.hit_box)
 
                     text_rect = stage_number_surface.get_rect(center = part_middle)
 

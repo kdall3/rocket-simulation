@@ -12,6 +12,27 @@ def get_poly_bounding_box(poly):
     return ((min(x), min(y)), (max(x), max(y)))
 
 
+def get_centroid_poly(poly):
+    A = 0
+
+    for i, _ in enumerate(poly):
+        u = poly[i-1]
+        v = poly[i]
+        A += u[0] * v[1] - v[0] * u[1]
+    A = A/2
+
+    centroid = np.array([0.0, 0.0])
+    for i, _ in enumerate(poly):
+        u = poly[i-1]
+        v = poly[i]
+        centroid[0] += (u[0] + v[0]) * (u[0] * v[1] - v[0] * u[1])
+        centroid[1] += (u[1] + v[1]) * (u[0] * v[1] - v[0] * u[1])
+    centroid[0] = centroid[0] / (6 * A)
+    centroid[1] = centroid[1] / (6 * A)
+
+    return centroid
+
+
 def check_point_in_box(point, rects):
     if len(np.array(rects).shape) == 1:  # If there is 1 rect
         box = ((rects[0], rects[1]), (rects[0] + rects[2], rects[1] + rects[3]))
@@ -62,8 +83,6 @@ def get_box_centre(box):
 
 
 def rotate_poly(poly, centre, angle):  # Angle measured in radians
-    print(poly, type(poly))
-
     poly = np.array([np.array(vertex) for vertex in poly])
     centre = np.array([float(centre[0]), float(centre[1])])
     R = np.array(((np.cos(angle), -np.sin(angle)), (np.sin(angle), np.cos(angle))))

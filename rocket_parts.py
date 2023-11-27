@@ -330,12 +330,14 @@ class Decoupler(RocketPart):
         
         if self.being_dragged:
             mouse_pos = pygame.mouse.get_pos()
-            self.hit_box = geometry.pygame_box_to_poly((mouse_pos[0] - zoom*self.length/2, mouse_pos[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom))
+            self.hit_box = (mouse_pos[0] - zoom*self.length/2, mouse_pos[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom)
             self.vertices = [(self.hit_box[0], self.hit_box[1]), (self.hit_box[0] + self.hit_box[2], self.hit_box[1]), 
                              (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3]), (self.hit_box[0], self.hit_box[1] + self.hit_box[3])]
 
-            self.hit_box = [geometry.rotate_poly(box, graphic_centre, angle) for box in self.hit_box]
-            self.vertices = [geometry.rotate_poly(poly, graphic_centre, angle) for poly in self.vertices]
+            self.hit_box = geometry.pygame_box_to_poly(self.hit_box)
+
+            self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
+            self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
 
             pygame.draw.polygon(root, self.colour, self.vertices, line_width)
         else:
@@ -344,8 +346,10 @@ class Decoupler(RocketPart):
             self.vertices = [(self.hit_box[0], self.hit_box[1]), (self.hit_box[0] + self.hit_box[2], self.hit_box[1]), 
                              (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3]), (self.hit_box[0], self.hit_box[1] + self.hit_box[3])]
 
-            self.hit_box = [geometry.rotate_poly(box, graphic_centre, angle) for box in self.hit_box]
-            self.vertices = [geometry.rotate_poly(poly, graphic_centre, angle) for poly in self.vertices]
+            self.hit_box = geometry.pygame_box_to_poly(self.hit_box)
+
+            self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
+            self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
 
             pygame.draw.polygon(root, self.colour, self.vertices, line_width)
 
