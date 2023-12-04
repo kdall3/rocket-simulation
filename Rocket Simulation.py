@@ -352,14 +352,14 @@ class Editor():
                     # Prioritize clicks on engine
                     dragging = False
                     for part in self.rocket.parts:
-                        if geometry.check_point_in_box(mouse_pos, part.hit_box) and isinstance(part, Engine):
+                        if part.check_point_in_hit_box(mouse_pos) and isinstance(part, Engine):
                             dragging = True
                             part.being_dragged = True
                             break
                     
                     if dragging == False:
                         for part in self.rocket.parts:
-                            if geometry.check_point_in_box(mouse_pos, part.hit_box):
+                            if part.check_point_in_hit_box(mouse_pos):
                                 part.being_dragged = True
                                 break
                 
@@ -377,20 +377,20 @@ class Editor():
 
                     if isinstance(released_part, Engine):
                         for position, part in enumerate(self.rocket.parts):
-                            if geometry.check_point_in_box(mouse_pos, part.hit_box) and check_part_type(part, [BodyTube, NoseCone, Decoupler]):
+                            if part.check_point_in_hit_box(mouse_pos) and check_part_type(part, [BodyTube, NoseCone, Decoupler]):
                                 released_part.parent_id = part.local_part_id
                         released_part.being_dragged = False
 
                     elif isinstance(released_part, Fins):
                         for position, part in enumerate(self.rocket.parts):
-                            if geometry.check_point_in_box(mouse_pos, part.hit_box) and check_part_type(part, [BodyTube, NoseCone, Decoupler]):
+                            if part.check_point_in_hit_box(mouse_pos) and check_part_type(part, [BodyTube, NoseCone, Decoupler]):
                                 released_part.parent_id = part.local_part_id
                             released_part.being_dragged = False
 
                     else:
                         for position, part in enumerate(self.rocket.parts):
                             if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
-                                centre = geometry.get_box_centre(part.hit_box)
+                                centre = geometry.get_centroid_poly(part.hit_box)
 
                                 if mouse_pos[0] < centre[0] and released_position == None:
                                     released_position = position
@@ -416,16 +416,14 @@ class Editor():
                     # Prioritize clicks on engine
                     selected = False
                     for part in self.rocket.parts:
-                        bounding_box = part.hit_box
-                        if geometry.check_point_in_box(mouse_pos, bounding_box) and isinstance(part, Engine):
+                        if part.check_point_in_hit_box(mouse_pos) and isinstance(part, Engine):
                             selected = True
                             self.select_part(part)
                             break
                         
                     if selected == False:
                         for part in self.rocket.parts:
-                            bounding_box = part.hit_box
-                            if geometry.check_point_in_box(mouse_pos, bounding_box):
+                            if part.check_point_in_hit_box(mouse_pos):
                                 self.select_part(part)
                                 break
 

@@ -1,5 +1,6 @@
 import pygame
 import math
+import time
 
 import geometry
 
@@ -44,6 +45,9 @@ class RocketPart():
         self.mass_override = False
 
         self.hit_box = (0, 0, 0, 0)
+    
+    def check_point_in_hit_box(self, point):
+        return geometry.check_point_in_poly(point, self.hit_box)
 
 
 class Rocket():
@@ -89,19 +93,23 @@ class BodyTube(RocketPart):
         
         if self.being_dragged:
             mouse_pos = pygame.mouse.get_pos()
-            self.hit_box = geometry.pygame_box_to_poly([mouse_pos[0] - zoom*self.length/2, mouse_pos[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom])
-            self.vertices = [(self.hit_box[0], self.hit_box[1]), (self.hit_box[0] + self.hit_box[2], self.hit_box[1]), 
-                             (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3]), (self.hit_box[0], self.hit_box[1] + self.hit_box[3])]
+            self.unrotated_hit_box = [mouse_pos[0] - zoom*self.length/2, mouse_pos[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom]
+            self.vertices = [(self.unrotated_hit_box[0], self.unrotated_hit_box[1]), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]), 
+                             (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3]), (self.unrotated_hit_box[0], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
             
+            self.hit_box = geometry.pygame_box_to_poly(self.unrotated_hit_box)
+        
             self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
             self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
 
             pygame.draw.polygon(root, self.colour, self.vertices, line_width)
         else:
             start_x = graphic_centre[0] + length_rendered - total_length/2
-            self.hit_box = geometry.pygame_box_to_poly([start_x, graphic_centre[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom])
-            self.vertices = [(self.hit_box[0], self.hit_box[1]), (self.hit_box[0] + self.hit_box[2], self.hit_box[1]), 
-                             (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3]), (self.hit_box[0], self.hit_box[1] + self.hit_box[3])]
+            self.unrotated_hit_box = [start_x, graphic_centre[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom]
+            self.vertices = [(self.unrotated_hit_box[0], self.unrotated_hit_box[1]), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]), 
+                             (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3]), (self.unrotated_hit_box[0], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
+            
+            self.hit_box = geometry.pygame_box_to_poly(self.unrotated_hit_box)
             
             self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
             self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
@@ -146,9 +154,11 @@ class NoseCone(RocketPart):
             mouse_pos = pygame.mouse.get_pos()
 
             if self.cone_shape == 'conic':
-                self.hit_box = geometry.pygame_box_to_poly([mouse_pos[0] - zoom*self.length/2, mouse_pos[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom])
-                self.vertices = [(self.hit_box[0], mouse_pos[1]), (self.hit_box[0] + self.hit_box[2], self.hit_box[1]), 
-                                 (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3])]
+                self.unrotated_hit_box = [mouse_pos[0] - zoom*self.length/2, mouse_pos[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom]
+                self.vertices = [(self.unrotated_hit_box[0], mouse_pos[1]), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]), 
+                                 (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
+                
+                self.hit_box = geometry.pygame_box_to_poly(self.unrotated_hit_box)
                 
                 self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
                 self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
@@ -157,9 +167,11 @@ class NoseCone(RocketPart):
         else:
             if self.cone_shape == 'conic':
                 start_x = graphic_centre[0] + length_rendered - total_length/2
-                self.hit_box = geometry.pygame_box_to_poly([start_x, graphic_centre[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom])
-                self.vertices = [(self.hit_box[0], graphic_centre[1]), (self.hit_box[0] + self.hit_box[2], self.hit_box[1]), 
-                                 (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3])]
+                self.unrotated_hit_box = [start_x, graphic_centre[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom]
+                self.vertices = [(self.unrotated_hit_box[0], graphic_centre[1]), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]), 
+                                 (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
+                
+                self.hit_box = geometry.pygame_box_to_poly(self.unrotated_hit_box)
                 
                 self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
                 self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
@@ -211,21 +223,25 @@ class Engine(RocketPart):
 
         if self.being_dragged:
             mouse_pos = pygame.mouse.get_pos()
-            self.hit_box = geometry.pygame_box_to_poly([mouse_pos[0] - zoom*self.length/2, mouse_pos[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom])
-            self.vertices = [(self.hit_box[0], self.hit_box[1]), (self.hit_box[0] + self.hit_box[2], self.hit_box[1]), 
-                             (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3]), (self.hit_box[0], self.hit_box[1] + self.hit_box[3])]
+            self.unrotated_hit_box = [mouse_pos[0] - zoom*self.length/2, mouse_pos[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom]
+            self.vertices = [(self.unrotated_hit_box[0], self.unrotated_hit_box[1]), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]), 
+                             (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3]), (self.unrotated_hit_box[0], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
+            
+            self.hit_box = geometry.pygame_box_to_poly(self.unrotated_hit_box)
             
             self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
             self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
 
             pygame.draw.polygon(root, self.colour, self.vertices, line_width)
         else:
-            parent_centre = geometry.get_box_centre(self.parent.hit_box)
-            start_x = self.parent.hit_box[0] + self.parent.hit_box[2] + self.offset - self.length*zoom 
+            parent_centre = geometry.get_box_centre(self.parent.unrotated_hit_box)
+            start_x = self.parent.unrotated_hit_box[0] + self.parent.unrotated_hit_box[2] + self.offset - self.length*zoom 
             start_y = parent_centre[1] - (self.diameter/2)*zoom
-            self.hit_box = geometry.pygame_box_to_poly([start_x, start_y, self.length*zoom, self.diameter*zoom])
-            self.vertices = [(self.hit_box[0], self.hit_box[1]), (self.hit_box[0] + self.hit_box[2], self.hit_box[1]), 
-                             (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3]), (self.hit_box[0], self.hit_box[1] + self.hit_box[3])]
+            self.unrotated_hit_box = [start_x, start_y, self.length*zoom, self.diameter*zoom]
+            self.vertices = [(self.unrotated_hit_box[0], self.unrotated_hit_box[1]), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]), 
+                             (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3]), (self.unrotated_hit_box[0], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
+            
+            self.hit_box = geometry.pygame_box_to_poly(self.unrotated_hit_box)
             
             self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
             self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
@@ -264,6 +280,11 @@ class Fins(RocketPart):
             if self.mass_override:
                 self.mass = get_entry(master, 'mass', self.mass)
     
+    def check_point_in_hit_box(self, point):  # Redefining the method from super(), as the Fins object has two hitboxes
+        for hit_box in self.hit_box:
+            if geometry.check_point_in_poly(point, hit_box):
+                return True
+    
     def render(self, rocket, root, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width, angle=0):
         for part in rocket.parts:
             if part.local_part_id == self.parent_id:
@@ -278,12 +299,14 @@ class Fins(RocketPart):
             mouse_pos = pygame.mouse.get_pos()
             if self.fin_shape == 'triangle':
                 start_x = mouse_pos[0] - (self.length/2)*zoom
-                self.hit_box = [geometry.pygame_box_to_poly([start_x, mouse_pos[1] - self.parent.hit_box[3]/2 - self.width*zoom, self.length*zoom, self.width*zoom]),
-                                geometry.pygame_box_to_poly([start_x, mouse_pos[1] + self.parent.hit_box[3]/2, self.length*zoom, self.width*zoom])]
-                self.vertices = [[(self.hit_box[0][0], self.hit_box[0][1] + self.hit_box[0][3]), (self.hit_box[0][0] + self.hit_box[0][2], self.hit_box[0][1] + self.hit_box[0][3]),
-                                  (self.hit_box[0][0] + self.hit_box[0][2], self.hit_box[0][1])],
-                                 [(self.hit_box[1][0], self.hit_box[1][1]), (self.hit_box[1][0] + self.hit_box[1][2], self.hit_box[1][1]),
-                                  (self.hit_box[1][0] + self.hit_box[1][2], self.hit_box[1][1] + self.hit_box[1][3])]]
+                self.unrotated_hit_box = [[start_x, mouse_pos[1] - self.parent.unrotated_hit_box[3]/2 - self.width*zoom, self.length*zoom, self.width*zoom],
+                                [start_x, mouse_pos[1] + self.parent.unrotated_hit_box[3]/2, self.length*zoom, self.width*zoom]]
+                self.vertices = [[(self.unrotated_hit_box[0][0], self.unrotated_hit_box[0][1] + self.unrotated_hit_box[0][3]), (self.unrotated_hit_box[0][0] + self.unrotated_hit_box[0][2], self.unrotated_hit_box[0][1] + self.unrotated_hit_box[0][3]),
+                                  (self.unrotated_hit_box[0][0] + self.unrotated_hit_box[0][2], self.unrotated_hit_box[0][1])],
+                                 [(self.unrotated_hit_box[1][0], self.unrotated_hit_box[1][1]), (self.unrotated_hit_box[1][0] + self.unrotated_hit_box[1][2], self.unrotated_hit_box[1][1]),
+                                  (self.unrotated_hit_box[1][0] + self.unrotated_hit_box[1][2], self.unrotated_hit_box[1][1] + self.unrotated_hit_box[1][3])]]
+                
+                self.hit_box = [geometry.pygame_box_to_poly(unrotated_hit_box) for unrotated_hit_box in self.unrotated_hit_box]
                 
                 self.hit_box = [geometry.rotate_poly(box, graphic_centre, angle) for box in self.hit_box]
                 self.vertices = [geometry.rotate_poly(poly, graphic_centre, angle) for poly in self.vertices]
@@ -292,14 +315,15 @@ class Fins(RocketPart):
                 pygame.draw.polygon(root, self.colour, self.vertices[1], line_width)
         else:
             if self.fin_shape == 'triangle':
-                start_x = self.parent.hit_box[0] + self.parent.hit_box[2] + self.offset*zoom - self.length*zoom 
-                self.hit_box = [(start_x, self.parent.hit_box[1]-self.width*zoom, self.length*zoom, self.width*zoom), 
-                              (start_x, self.parent.hit_box[1]+self.parent.hit_box[3], self.length*zoom, self.width*zoom)]
+                start_x = self.parent.unrotated_hit_box[0] + self.parent.unrotated_hit_box[2] + self.offset*zoom - self.length*zoom 
+                self.unrotated_hit_box = [(start_x, self.parent.unrotated_hit_box[1]-self.width*zoom, self.length*zoom, self.width*zoom), 
+                              (start_x, self.parent.unrotated_hit_box[1]+self.parent.unrotated_hit_box[3], self.length*zoom, self.width*zoom)]
+                self.vertices = [[(self.unrotated_hit_box[0][0], self.parent.unrotated_hit_box[1]), (self.unrotated_hit_box[0][0] + self.unrotated_hit_box[0][2], self.parent.unrotated_hit_box[1]),
+                                  (self.unrotated_hit_box[0][0] + self.unrotated_hit_box[0][2], self.unrotated_hit_box[0][1])],
+                                 [(self.unrotated_hit_box[1][0], self.unrotated_hit_box[1][1]), (self.unrotated_hit_box[1][0] + self.unrotated_hit_box[1][2], self.unrotated_hit_box[1][1]),                                                       
+                                  (self.unrotated_hit_box[1][0] + self.unrotated_hit_box[1][2], self.unrotated_hit_box[1][1] + self.unrotated_hit_box[1][3])]]
                 
-                self.vertices = [[(self.hit_box[0][0], self.parent.hit_box[1]), (self.hit_box[0][0] + self.hit_box[0][2], self.parent.hit_box[1]),
-                                  (self.hit_box[0][0] + self.hit_box[0][2], self.hit_box[0][1])],
-                                 [(self.hit_box[1][0], self.hit_box[1][1]), (self.hit_box[1][0] + self.hit_box[1][2], self.hit_box[1][1]),                                                       
-                                  (self.hit_box[1][0] + self.hit_box[1][2], self.hit_box[1][1] + self.hit_box[1][3])]]
+                self.hit_box = [geometry.pygame_box_to_poly(unrotated_hit_box) for unrotated_hit_box in self.unrotated_hit_box]
 
                 self.hit_box = [geometry.rotate_poly(box, graphic_centre, angle) for box in self.hit_box]
                 self.vertices = [geometry.rotate_poly(poly, graphic_centre, angle) for poly in self.vertices]
@@ -330,11 +354,11 @@ class Decoupler(RocketPart):
         
         if self.being_dragged:
             mouse_pos = pygame.mouse.get_pos()
-            self.hit_box = (mouse_pos[0] - zoom*self.length/2, mouse_pos[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom)
-            self.vertices = [(self.hit_box[0], self.hit_box[1]), (self.hit_box[0] + self.hit_box[2], self.hit_box[1]), 
-                             (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3]), (self.hit_box[0], self.hit_box[1] + self.hit_box[3])]
+            self.unrotated_hit_box = [mouse_pos[0] - zoom*self.length/2, mouse_pos[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom]
+            self.vertices = [(self.unrotated_hit_box[0], self.unrotated_hit_box[1]), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]), 
+                             (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3]), (self.unrotated_hit_box[0], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
 
-            self.hit_box = geometry.pygame_box_to_poly(self.hit_box)
+            self.hit_box = geometry.pygame_box_to_poly(self.unrotated_hit_box)
 
             self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
             self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
@@ -342,11 +366,11 @@ class Decoupler(RocketPart):
             pygame.draw.polygon(root, self.colour, self.vertices, line_width)
         else:
             start_x = graphic_centre[0] + length_rendered - total_length/2
-            self.hit_box = (start_x, graphic_centre[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom)
-            self.vertices = [(self.hit_box[0], self.hit_box[1]), (self.hit_box[0] + self.hit_box[2], self.hit_box[1]), 
-                             (self.hit_box[0] + self.hit_box[2], self.hit_box[1] + self.hit_box[3]), (self.hit_box[0], self.hit_box[1] + self.hit_box[3])]
+            self.unrotated_hit_box = [start_x, graphic_centre[1] - zoom*self.diameter/2, self.length*zoom, self.diameter*zoom]
+            self.vertices = [(self.unrotated_hit_box[0], self.unrotated_hit_box[1]), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]), 
+                             (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3]), (self.unrotated_hit_box[0], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
 
-            self.hit_box = geometry.pygame_box_to_poly(self.hit_box)
+            self.hit_box = geometry.pygame_box_to_poly(self.unrotated_hit_box)
 
             self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
             self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)

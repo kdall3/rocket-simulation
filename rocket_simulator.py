@@ -71,7 +71,8 @@ class Simulator():
             'thrust': [],
             'drag': [],
             'fuel': [],
-            'mass': []
+            'mass': [],
+            'stage': []
         }
     
     def simulate(self):

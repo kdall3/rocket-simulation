@@ -51,7 +51,9 @@ def render_rocket_editor(rocket, root, container, font=None, auto_zoom=True, zoo
                 length_rendered += part.length * zoom
 
 
-def render_rocket_simulation(rocket, current_flight_data, root, container, zoom_multiplier=0.95, line_width=2):
+def render_rocket_simulation(current_rocket, original_rocket, flight_data, time_step, root, container, zoom_multiplier=0.95, line_width=2):  # time_step is how many steps of the simulation have been rendered since the start of the data
+
+    # ZOOM
     container_centre = geometry.get_box_centre(container)
 
     total_length = 0
@@ -71,3 +73,6 @@ def render_rocket_simulation(rocket, current_flight_data, root, container, zoom_
         zoom = zoom_multiplier * min(container[3:4]) / max([total_length, max_diameter])
     except ZeroDivisionError:
         zoom = 1
+    
+    # SIMULATION
+    
