@@ -155,3 +155,4 @@ class Simulator():
         self.flight_data['drag'].append(self.drag)
         self.flight_data['fuel'].append(self.fuel)
         self.flight_data['mass'].append(self.mass)
+        self.flight_data['stage'].append(self.stage)

@@ -48,7 +48,13 @@ class RocketPart():
     
     def check_point_in_hit_box(self, point):
         return geometry.check_point_in_poly(point, self.hit_box)
-
+    
+    def get_stage(self, rocket):
+        for stage_num, stage in enumerate(rocket.stage):
+            if self.local_part_id in stage:
+                return stage_num
+        
+        return None
 
 class Rocket():
     def __init__(self, name='New Rocket', parts=[]):
@@ -68,6 +74,8 @@ class BodyTube(RocketPart):
         self.wall_thickness = wall_thickness
         self.density = density
         self.mass = self.get_mass()
+
+        self.unrotated_hit_box = [0, 0, 0, 0]
 
         
     def editor_update_variables(self, master):
@@ -211,7 +219,7 @@ class Engine(RocketPart):
             if self.mass_override:
                 self.mass = get_entry(master, 'mass', self.mass)
     
-    def render(self, rocket, root, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width, angle=0):
+    def render(self, rocket, root, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width, angle=0, burning=False, fuel=1):  # burning and fuel only used for simulation playback
         for part in rocket.parts:
             if part.local_part_id == self.parent_id:
                 self.parent = part
@@ -233,6 +241,26 @@ class Engine(RocketPart):
             self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
 
             pygame.draw.polygon(root, self.colour, self.vertices, line_width)
+
+        elif burning:
+            parent_centre = geometry.get_box_centre(self.parent.unrotated_hit_box)
+            start_x = self.parent.unrotated_hit_box[0] + self.parent.unrotated_hit_box[2] + self.offset - self.length*zoom 
+            start_y = parent_centre[1] - (self.diameter/2)*zoom
+            self.unrotated_hit_box = [start_x, start_y, self.length*zoom, self.diameter*zoom]
+            self.vertices = [(self.unrotated_hit_box[0], self.unrotated_hit_box[1]), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]), 
+                             (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3]), (self.unrotated_hit_box[0], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
+            self.fill_vertices = [(self.unrotated_hit_box[0], self.unrotated_hit_box[1]-self.unrotated_hit_box[3] * (1-fuel)), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]-self.unrotated_hit_box[3] * (1-fuel)),
+                                  (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3]), (self.unrotated_hit_box[0], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
+            
+            self.hit_box = geometry.pygame_box_to_poly(self.unrotated_hit_box)
+            
+            self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
+            self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
+            self.fill_vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
+
+            pygame.draw.polygon(root, self.colour, self.vertices, line_width)
+            pygame.draw.polygon(root, self.colour, self.fill_vertices)  # Fills an area of the engine proportional to the fuel left in it
+
         else:
             parent_centre = geometry.get_box_centre(self.parent.unrotated_hit_box)
             start_x = self.parent.unrotated_hit_box[0] + self.parent.unrotated_hit_box[2] + self.offset - self.length*zoom 

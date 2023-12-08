@@ -452,7 +452,7 @@ class Editor():
                     try:
                         if event.ui_element == self.info_panel_elements['simulate button']:
                             self.close()
-                            Simulation(self.rocket)
+                            SimulationPlayer(self.rocket)
                     except AttributeError:
                         pass
                 
@@ -495,8 +495,6 @@ class Editor():
                             self.delete_part_from_stages(part)
                             self.rocket.stages.append([part.local_part_id])
                             self.self.part_editor_elements['stage entry'].set_text(str(len(self.rocket.stages)))
-                        
-                        print(self.rocket.stages)
                 except Exception:
                     pass
 
@@ -853,6 +851,53 @@ class Simulation():
         
         plt.ion()
         plt.show()
+
+
+class SimulationPlayer():
+    def __init__(self, rocket):
+        self.alive = True
+
+        self.rocket = rocket
+
+        self.create_window()
+    
+    def create_window(self):
+        self.get_flight_data()
+
+        self.window_dimensions = (1500, 700)
+        self.monitor_dimensions = (1920, 1080)
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (3*self.monitor_dimensions[0]/4-self.window_dimensions[0]/2, self.monitor_dimensions[1]/2-self.window_dimensions[1]/2)
+
+        pygame.init()
+
+        self.font = pygame.font.Font('data/fonts/Rubik-Regular.ttf', 20)
+
+        self.root = pygame.display.set_mode(self.window_dimensions)
+        pygame.display.set_caption('Rocket Editor')
+
+    def get_flight_data(self):
+        self.simulator = rocket_simulator.Simulator(self.rocket)
+        self.flight_data = self.simulator.simulate()
+
+        burnout_time = self.flight_data['time'][-1]
+        for i, fuel in enumerate(self.flight_data['fuel']):
+            if fuel == 0:
+                burnout_time = self.flight_data['time'][i]
+                break
+        
+        # Convert negative values to postive so an absolute maximum value can be found
+        speed = [abs(x) for x in self.flight_data['velocity']]
+        proper_acceleration = [abs(x) for x in self.flight_data['acceleration']]
+        proper_g_force = [abs(x) for x in self.flight_data['g-force']]
+
+        self.flight_info = {
+            'Total Flight Time': f"{round(self.flight_data['time'][-1], 3)} s",
+            'Motor Burnout Time': f"{round(burnout_time, 3)} s",
+            'Maximum Altitude': f"{round(max(self.flight_data['altitude']), 3)} m",
+            'Maximum Speed': f"{round(max(speed), 3)} m/s",
+            'Maximum Acceleration': f"{round(max(proper_acceleration), 3)} m/s^2",
+            'Maximum G-Force': f"{round(max(proper_g_force), 3)} G's"
+        }
 
 
 if __name__ == "__main__":

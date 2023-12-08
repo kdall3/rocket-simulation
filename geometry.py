@@ -57,8 +57,6 @@ def check_point_in_box(point, rects):
 
 
 def check_point_in_poly(point, poly):
-    print(poly, point)
-
     # Rough check
     bounding_box = get_poly_bounding_box(poly)
     if not (point[0] > bounding_box[0][0] and point[0] < bounding_box[1][0]) and (point[1] > bounding_box[0][1] and point[0] < bounding_box[1][1]):

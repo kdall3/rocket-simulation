@@ -31,28 +31,29 @@ def render_rocket_editor(rocket, root, container, font=None, auto_zoom=True, zoo
     total_length = total_length * zoom
 
     for part in rocket.parts:
-        if hasattr(part, 'render'):
-            part.render(root=root, rocket=rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=normal_line_width, selected_line_width=selected_line_width)
-            
-            if show_stages and font is not None:
-                current_part_stage = None
-                for stage_number, stage_ids in enumerate(rocket.stages):
-                    if part.local_part_id in stage_ids:
-                        current_part_stage = stage_number
+        if not hasattr(part, 'render'):
+            continue
 
-                if current_part_stage is not None:
-                    stage_number_surface = font.render(str(current_part_stage), True, (255, 255, 255))
-                    part_middle = geometry.get_centroid_poly(part.hit_box)
+        part.render(root=root, rocket=rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=normal_line_width, selected_line_width=selected_line_width)
+        
+        if show_stages and font is not None:
+            current_part_stage = None
+            for stage_number, stage_ids in enumerate(rocket.stages):
+                if part.local_part_id in stage_ids:
+                    current_part_stage = stage_number
 
-                    text_rect = stage_number_surface.get_rect(center = part_middle)
+            if current_part_stage is not None:
+                stage_number_surface = font.render(str(current_part_stage), True, (255, 255, 255))
+                part_middle = geometry.get_centroid_poly(part.hit_box)
 
-                    root.blit(stage_number_surface, text_rect)
-            if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
-                length_rendered += part.length * zoom
+                text_rect = stage_number_surface.get_rect(center = part_middle)
+
+                root.blit(stage_number_surface, text_rect)
+        if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
+            length_rendered += part.length * zoom
 
 
 def render_rocket_simulation(current_rocket, original_rocket, flight_data, time_step, root, container, zoom_multiplier=0.95, line_width=2):  # time_step is how many steps of the simulation have been rendered since the start of the data
-
     # ZOOM
     container_centre = geometry.get_box_centre(container)
 
@@ -74,5 +75,16 @@ def render_rocket_simulation(current_rocket, original_rocket, flight_data, time_
     except ZeroDivisionError:
         zoom = 1
     
-    # SIMULATION
+    length_rendered = 0
     
+    # SIMULATION
+    for part in current_rocket:
+        if not hasattr(part, 'render'):
+            continue
+
+        if check_part_type(part, Engine):
+            if part.get_stage(current_rocket) == flight_data['stage'][time_step]:
+                part.render(root=root, rocket=current_rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=line_width, selected_line_width=line_width, burning=True, fuel=0.7)
+        
+        if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
+            length_rendered += part.length * zoom

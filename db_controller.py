@@ -3,7 +3,7 @@ import sqlite3
 from rocket_parts import *
 
 DATABASE = 'rockets.db'
-BLACKLISTED_ATTRIBUTES = ['being_dragged', 'selected', 'mass_override', 'hit_box', 'vertices', 'colour', 'parent']
+BLACKLISTED_ATTRIBUTES = ['being_dragged', 'selected', 'mass_override', 'hit_box', 'unrotated_hit_box', 'vertices', 'colour', 'parent']
 INT_ATTRIBUTES = ['local_part_id', 'parent_id', 'fin_count']
 TEXT_ATTRIBUTES = ['cone_shape', 'fin_shape']
 
