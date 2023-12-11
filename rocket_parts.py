@@ -1,15 +1,16 @@
 import pygame
 import math
 import time
+import random
 
 import geometry
 
 
 def check_part_type(part, part_whitelist):
-        for whitelisted_part in part_whitelist:
-            if isinstance(part, whitelisted_part):
-                return True
-        return False
+    for whitelisted_part in part_whitelist:
+        if isinstance(part, whitelisted_part):
+            return True
+    return False
 
 
 def get_children(master_part, rocket):
@@ -50,7 +51,7 @@ class RocketPart():
         return geometry.check_point_in_poly(point, self.hit_box)
     
     def get_stage(self, rocket):
-        for stage_num, stage in enumerate(rocket.stage):
+        for stage_num, stage in enumerate(rocket.stages):
             if self.local_part_id in stage:
                 return stage_num
         
@@ -243,23 +244,33 @@ class Engine(RocketPart):
             pygame.draw.polygon(root, self.colour, self.vertices, line_width)
 
         elif burning:
+            flame_vert_count = 10
+            flame_constraint = (3, 25) # Pixels
+
             parent_centre = geometry.get_box_centre(self.parent.unrotated_hit_box)
             start_x = self.parent.unrotated_hit_box[0] + self.parent.unrotated_hit_box[2] + self.offset - self.length*zoom 
             start_y = parent_centre[1] - (self.diameter/2)*zoom
             self.unrotated_hit_box = [start_x, start_y, self.length*zoom, self.diameter*zoom]
             self.vertices = [(self.unrotated_hit_box[0], self.unrotated_hit_box[1]), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]), 
                              (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3]), (self.unrotated_hit_box[0], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
-            self.fill_vertices = [(self.unrotated_hit_box[0], self.unrotated_hit_box[1]-self.unrotated_hit_box[3] * (1-fuel)), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]-self.unrotated_hit_box[3] * (1-fuel)),
-                                  (self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3]), (self.unrotated_hit_box[0], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
+            self.fill_vertices = [(self.unrotated_hit_box[0], self.unrotated_hit_box[1]), (self.unrotated_hit_box[0] + self.unrotated_hit_box[2] * fuel, self.unrotated_hit_box[1]),
+                                  (self.unrotated_hit_box[0] + self.unrotated_hit_box[2] * fuel, self.unrotated_hit_box[1] + self.unrotated_hit_box[3]), (self.unrotated_hit_box[0], self.unrotated_hit_box[1] + self.unrotated_hit_box[3])]
+            self.flame_vertices = []
+            for i in range(flame_vert_count + 1):
+                self.flame_vertices.append([self.unrotated_hit_box[0] + self.unrotated_hit_box[2] + random.randrange(flame_constraint[0], flame_constraint[1]), self.unrotated_hit_box[1] + i * (self.unrotated_hit_box[3]/flame_vert_count)])
+            self.flame_vertices.append([self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1] + self.unrotated_hit_box[3]])
+            self.flame_vertices.append([self.unrotated_hit_box[0] + self.unrotated_hit_box[2], self.unrotated_hit_box[1]])
             
             self.hit_box = geometry.pygame_box_to_poly(self.unrotated_hit_box)
             
             self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
             self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
-            self.fill_vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
+            self.fill_vertices = geometry.rotate_poly(self.fill_vertices, graphic_centre, angle)
+            self.flame_vertices = geometry.rotate_poly(self.flame_vertices, graphic_centre, angle)
 
-            pygame.draw.polygon(root, self.colour, self.vertices, line_width)
             pygame.draw.polygon(root, self.colour, self.fill_vertices)  # Fills an area of the engine proportional to the fuel left in it
+            pygame.draw.polygon(root, (200, 0, 0), self.flame_vertices)
+            pygame.draw.polygon(root, self.colour, self.vertices, line_width)
 
         else:
             parent_centre = geometry.get_box_centre(self.parent.unrotated_hit_box)

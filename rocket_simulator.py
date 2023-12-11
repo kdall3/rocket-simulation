@@ -61,6 +61,7 @@ class Simulator():
             self.mass += part.mass
             self.parts_to_part_ids.update({part.local_part_id:part})
 
+        self.rocket_at_stage = []
 
         self.flight_data = {
             'time': [],
@@ -76,6 +77,8 @@ class Simulator():
         }
     
     def simulate(self):
+        self.rocket_at_stage.append(self.rocket)
+
         while True:
             self.step()
 
@@ -100,7 +103,7 @@ class Simulator():
                 self.thrust = 0
                 self.fuel = 0 
 
-                if self.stage != self.max_stage:
+                if self.stage != self.max_stage:  # STAGE
                     self.stage += 1
                     for part_id in self.rocket.stages[self.stage]:
                         part_in_stage = self.parts_to_part_ids[part_id]
@@ -124,6 +127,8 @@ class Simulator():
                             self.engine = part_in_stage
                             self.fuel = 1
                             self.thrust = self.engine.average_thrust
+                
+                    self.rocket_at_stage.append(self.rocket)
 
             else: # Engine burning all the way during the time step
                 self.thrust = self.engine.average_thrust

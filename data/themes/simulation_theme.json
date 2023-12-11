@@ -48,6 +48,29 @@
         }
     },
 
+    "@play_buttons":
+    {
+        "misc":
+        {
+            "shadow_width": "5",
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10"
+        },
+
+        "images":
+        {
+            "normal_image":
+            {
+                "path": "data/images/pause.png"
+            },
+
+            "selected_image":
+            {
+                "path": "data/images/play.png"
+            }
+        }
+    },
+
     "label":
     {
         "font":

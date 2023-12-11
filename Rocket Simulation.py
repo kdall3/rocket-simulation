@@ -1,6 +1,7 @@
 import pygame
 import pygame_gui
 import matplotlib.pyplot as plt
+import math
 
 import os
 
@@ -260,7 +261,7 @@ class RocketLoader():
             if self.target_window == 'editor':
                 Editor(self.rockets[self.selected_index])
             elif self.target_window == 'simulator':
-                Simulation(self.rockets[self.selected_index])
+                SimulationPlayer(self.rockets[self.selected_index])
             else:
                 raise Exception('Invalid target window')
 
@@ -857,7 +858,13 @@ class SimulationPlayer():
     def __init__(self, rocket):
         self.alive = True
 
-        self.rocket = rocket
+        self.original_rocket = rocket
+
+        self.step = 0
+        self.rocket_angle = math.pi / 2
+
+        self.bg_colour = (36, 36, 36)
+        self.part_colour = (255, 255, 255)
 
         self.create_window()
     
@@ -873,10 +880,51 @@ class SimulationPlayer():
         self.font = pygame.font.Font('data/fonts/Rubik-Regular.ttf', 20)
 
         self.root = pygame.display.set_mode(self.window_dimensions)
-        pygame.display.set_caption('Rocket Editor')
+        pygame.display.set_caption('Simulation Player')
+
+        self.ui_manager = pygame_gui.UIManager(self.window_dimensions, 'data/themes/simulation_theme.json')
+
+        label_object_id = pygame_gui.core.ObjectID(class_id='@text_entry_labels')
+        play_button_object_id = pygame_gui.core.ObjectID(class_id='@play_buttons')
+
+        self.play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(700, 550, 100, 100), text='', manager=self.ui_manager, object_id=play_button_object_id)
+
+        self.clock = pygame.time.Clock()
+
+        while self.alive:
+            self.time_delta = self.clock.tick(60)/1000
+
+            self.handle_events()
+
+            self.ui_manager.update(self.time_delta)
+
+            self.ui_manager.draw_ui(self.root)
+
+            self.render()
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.close()
+                return None
+            
+            self.ui_manager.process_events(event)
+    
+    def close(self):
+        self.alive = False
+        pygame.quit()
+    
+    def render(self):
+        self.root.fill(self.bg_colour)
+
+        rocket_renderer.render_rocket_simulation(current_rocket=self.simulator.rocket_at_stage[self.flight_data['stage'][self.step]], flight_data=self.flight_data, time_step=self.step, root=self.root, angle=self.rocket_angle, container=(0, 0, self.window_dimensions[0], self.window_dimensions[1]))
+
+        self.ui_manager.draw_ui(self.root)
+
+        pygame.display.update()
 
     def get_flight_data(self):
-        self.simulator = rocket_simulator.Simulator(self.rocket)
+        self.simulator = rocket_simulator.Simulator(self.original_rocket)
         self.flight_data = self.simulator.simulate()
 
         burnout_time = self.flight_data['time'][-1]
