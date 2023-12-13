@@ -261,7 +261,7 @@ class RocketLoader():
             if self.target_window == 'editor':
                 Editor(self.rockets[self.selected_index])
             elif self.target_window == 'simulator':
-                SimulationPlayer(self.rockets[self.selected_index])
+                Simulation(self.rockets[self.selected_index])
             else:
                 raise Exception('Invalid target window')
 
@@ -860,8 +860,10 @@ class SimulationPlayer():
 
         self.original_rocket = rocket
 
-        self.step = 0
-        self.rocket_angle = math.pi / 2
+        self.time_step = 0
+
+        self.rocket_angle = -math.pi / 2
+        self.paused = True
 
         self.bg_colour = (36, 36, 36)
         self.part_colour = (255, 255, 255)
@@ -875,6 +877,8 @@ class SimulationPlayer():
         self.monitor_dimensions = (1920, 1080)
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (3*self.monitor_dimensions[0]/4-self.window_dimensions[0]/2, self.monitor_dimensions[1]/2-self.window_dimensions[1]/2)
 
+        self.rocket_container = (0, 0, self.window_dimensions[0], 550)
+
         pygame.init()
 
         self.font = pygame.font.Font('data/fonts/Rubik-Regular.ttf', 20)
@@ -887,12 +891,17 @@ class SimulationPlayer():
         label_object_id = pygame_gui.core.ObjectID(class_id='@text_entry_labels')
         play_button_object_id = pygame_gui.core.ObjectID(class_id='@play_buttons')
 
-        self.play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(700, 550, 100, 100), text='', manager=self.ui_manager, object_id=play_button_object_id)
+        self.play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(700, 575, 100, 100), text='', manager=self.ui_manager, object_id=play_button_object_id)
 
         self.clock = pygame.time.Clock()
 
         while self.alive:
             self.time_delta = self.clock.tick(60)/1000
+
+            if not self.paused:
+                self.time_step += 1
+
+            self.update_rocket_angle()
 
             self.handle_events()
 
@@ -907,6 +916,10 @@ class SimulationPlayer():
             if event.type == pygame.QUIT:
                 self.close()
                 return None
+
+            if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == self.play_button:
+                    self.paused = not self.paused
             
             self.ui_manager.process_events(event)
     
@@ -917,7 +930,7 @@ class SimulationPlayer():
     def render(self):
         self.root.fill(self.bg_colour)
 
-        rocket_renderer.render_rocket_simulation(current_rocket=self.simulator.rocket_at_stage[self.flight_data['stage'][self.step]], flight_data=self.flight_data, time_step=self.step, root=self.root, angle=self.rocket_angle, container=(0, 0, self.window_dimensions[0], self.window_dimensions[1]))
+        rocket_renderer.render_rocket_simulation(current_rocket=self.simulator.rocket_at_stage[1], flight_data=self.flight_data, time_step=self.time_step, root=self.root, angle=self.rocket_angle, container=self.rocket_container)
 
         self.ui_manager.draw_ui(self.root)
 
@@ -933,6 +946,8 @@ class SimulationPlayer():
                 burnout_time = self.flight_data['time'][i]
                 break
         
+        self.length_of_data = len(self.flight_data['time'])
+
         # Convert negative values to postive so an absolute maximum value can be found
         speed = [abs(x) for x in self.flight_data['velocity']]
         proper_acceleration = [abs(x) for x in self.flight_data['acceleration']]
@@ -946,6 +961,14 @@ class SimulationPlayer():
             'Maximum Acceleration': f"{round(max(proper_acceleration), 3)} m/s^2",
             'Maximum G-Force': f"{round(max(proper_g_force), 3)} G's"
         }
+    
+    def update_rocket_angle(self):
+        apoapsis_altitude = max(self.flight_data['altitude'])
+        apoapsis_time_step = self.flight_data['altitude'].index(apoapsis_altitude)
+        if self.time_step <= apoapsis_time_step:
+            self.rocket_angle = (-math.pi / 2) - (self.time_step/apoapsis_time_step) * math.pi/2
+        else:
+            self.rocket_angle = (-math.pi) - ((self.time_step - apoapsis_time_step)/(self.length_of_data - apoapsis_time_step)) * math.pi/2
 
 
 if __name__ == "__main__":

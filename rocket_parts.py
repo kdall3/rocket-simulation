@@ -268,8 +268,9 @@ class Engine(RocketPart):
             self.fill_vertices = geometry.rotate_poly(self.fill_vertices, graphic_centre, angle)
             self.flame_vertices = geometry.rotate_poly(self.flame_vertices, graphic_centre, angle)
 
+            if fuel > 0:
+                pygame.draw.polygon(root, (200, 0, 0), self.flame_vertices)
             pygame.draw.polygon(root, self.colour, self.fill_vertices)  # Fills an area of the engine proportional to the fuel left in it
-            pygame.draw.polygon(root, (200, 0, 0), self.flame_vertices)
             pygame.draw.polygon(root, self.colour, self.vertices, line_width)
 
         else:

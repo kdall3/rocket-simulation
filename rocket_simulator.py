@@ -129,6 +129,7 @@ class Simulator():
                             self.thrust = self.engine.average_thrust
                 
                     self.rocket_at_stage.append(self.rocket)
+                    print(self.rocket.parts)
 
             else: # Engine burning all the way during the time step
                 self.thrust = self.engine.average_thrust
@@ -146,9 +147,6 @@ class Simulator():
         self.altitude += self.velocity * self.time_increment
 
         self.g_force = self.acceleration / g
-
-        if self.acceleration > 1000:
-            print(self.thrust, self.drag, self.mass, self.acceleration)
 
     def update_flight_data(self):
         self.flight_data['time'].append(self.time)

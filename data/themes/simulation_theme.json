@@ -61,12 +61,7 @@
         {
             "normal_image":
             {
-                "path": "data/images/pause.png"
-            },
-
-            "selected_image":
-            {
-                "path": "data/images/play.png"
+                "path": "data/images/pause-play.png"
             }
         }
     },

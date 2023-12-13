@@ -90,7 +90,7 @@ def render_rocket_simulation(current_rocket, flight_data, time_step, angle, root
 
         if check_part_type(part, [Engine]):
             if part.get_stage(current_rocket) == flight_data['stage'][time_step]:
-                part.render(root=root, rocket=current_rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=line_width, selected_line_width=line_width, angle=angle, burning=True, fuel=0.3)
+                part.render(root=root, rocket=current_rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=line_width, selected_line_width=line_width, angle=angle, burning=True, fuel=flight_data["fuel"][time_step])
         else:
             part.render(root=root, rocket=current_rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=line_width, selected_line_width=line_width, angle=angle)
         
