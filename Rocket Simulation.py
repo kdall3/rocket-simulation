@@ -261,7 +261,7 @@ class RocketLoader():
             if self.target_window == 'editor':
                 Editor(self.rockets[self.selected_index])
             elif self.target_window == 'simulator':
-                Simulation(self.rockets[self.selected_index])
+                SimulationPlayer(self.rockets[self.selected_index])
             else:
                 raise Exception('Invalid target window')
 
@@ -930,7 +930,7 @@ class SimulationPlayer():
     def render(self):
         self.root.fill(self.bg_colour)
 
-        rocket_renderer.render_rocket_simulation(current_rocket=self.simulator.rocket_at_stage[1], flight_data=self.flight_data, time_step=self.time_step, root=self.root, angle=self.rocket_angle, container=self.rocket_container)
+        rocket_renderer.render_rocket_simulation(current_rocket=self.simulator.rocket_at_stage[0], flight_data=self.flight_data, time_step=self.time_step, root=self.root, angle=self.rocket_angle, container=self.rocket_container)
 
         self.ui_manager.draw_ui(self.root)
 
