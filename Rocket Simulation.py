@@ -1,8 +1,8 @@
 import pygame
 import pygame_gui
 import matplotlib.pyplot as plt
-import math
 
+import math
 import os
 
 import geometry
@@ -10,6 +10,35 @@ import db_controller
 import rocket_renderer
 import rocket_simulator
 from rocket_parts import *
+
+
+class Stack():
+    def __init__(self, size):
+        self.stack = []
+
+        self.max_size = size
+    
+    def is_empty(self):
+        if len(self.stack) == 0:
+            return True
+        else:
+            return False
+    
+    def push(self, x):
+        if len(self.stack) == self.max_size:
+            self.stack.pop(0)  # NOT ALLOWED IN A STACK, USE A QUEUE
+
+        self.stack.append(x)
+
+    def pop(self):
+        return self.stack.pop()
+    
+    def peek(self):
+        if self.is_empty:
+            return None
+        else:
+            return self.stack[-1]
+
 
 class MainMenu():
     def __init__(self):
@@ -430,20 +459,21 @@ class Editor():
 
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == self.add_body_tube_button:
-                    self.add_body_tube()
+                    self.add_part(BodyTube)
                 elif event.ui_element == self.add_nose_cone_button:
-                    self.add_nose_cone()
+                    self.add_part(NoseCone)
                 elif event.ui_element == self.add_decoupler_button:
-                    self.add_decoupler()
+                    self.add_part(Decoupler)
                 elif event.ui_element == self.add_engine_button:
-                    self.add_engine()
+                    self.add_part(Engine)
                 elif event.ui_element == self.add_fins_button:
-                    self.add_fins()
+                    self.add_part(Fins)
                 elif event.ui_element == self.save_button:
                     self.save_design()
                 elif event.ui_element == self.load_button:
                     self.load_design()
                 else:
+                    # The following buttons may or may not exist, if they dont then the error is caught
                     try:
                         if event.ui_element == self.part_editor_elements['delete part button']:
                             self.delete_selected_part()
@@ -589,26 +619,18 @@ class Editor():
 
         RocketLoader('editor', 'editor')
 
-    def add_body_tube(self):
-        self.rocket.parts.append(BodyTube(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
-        self.rocket.new_part_id += 1
-    
-    def add_nose_cone(self):
-        self.rocket.parts.insert(0, NoseCone(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
-        self.rocket.new_part_id += 1
-    
-    def add_decoupler(self):
-        self.rocket.parts.append(Decoupler(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
-        self.rocket.stages.append([self.rocket.new_part_id])
-        self.rocket.new_part_id += 1
-      
-    def add_engine(self):
-        self.rocket.parts.append(Engine(self.rocket.parts[self.get_last_part_in_whitelist([BodyTube, NoseCone])].local_part_id, local_part_id=self.rocket.new_part_id))
-        self.rocket.stages.append([self.rocket.new_part_id])
-        self.rocket.new_part_id += 1
-    
-    def add_fins(self):
-        self.rocket.parts.append(Fins(self.rocket.parts[self.get_last_part_in_whitelist([BodyTube, NoseCone])].local_part_id, local_part_id=self.rocket.new_part_id))
+    def add_part(self, Part):
+        if check_part_type(Part, [BodyTube, NoseCone]):
+            self.rocket.parts.append(Part(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
+        elif check_part_type(Part, [Decoupler]):
+            self.rocket.parts.append(Part(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
+            self.rocket.stages.append([self.rocket.new_part_id])
+        elif check_part_type(Part, [Engine]):
+            self.rocket.parts.append(Engine(self.rocket.parts[self.get_last_part_in_whitelist([BodyTube, NoseCone])].local_part_id, local_part_id=self.rocket.new_part_id))
+            self.rocket.stages.append([self.rocket.new_part_id])
+        elif check_part_type(Part, [Fins]):
+            self.rocket.parts.append(Fins(self.rocket.parts[self.get_last_part_in_whitelist([BodyTube, NoseCone])].local_part_id, local_part_id=self.rocket.new_part_id))
+        
         self.rocket.new_part_id += 1
 
     def open_info_panel(self):
@@ -733,125 +755,125 @@ class Editor():
         self.open_info_panel()
 
 
-class Simulation():
-    def __init__(self, rocket):
-        self.alive = True
+# class Simulation():
+#     def __init__(self, rocket):
+#         self.alive = True
 
-        self.rocket = rocket
+#         self.rocket = rocket
 
-        self.bg_colour = (36, 36, 36)
+#         self.bg_colour = (36, 36, 36)
 
-        self.create_window()
+#         self.create_window()
     
-    def create_window(self):
-        self.get_flight_data()
+#     def create_window(self):
+#         self.get_flight_data()
 
-        self.window_dimensions = (450, 450)
-        self.monitor_dimensions = (1920, 1080)
-        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (3*self.monitor_dimensions[0]/4-self.window_dimensions[0]/2, self.monitor_dimensions[1]/2-self.window_dimensions[1]/2)
+#         self.window_dimensions = (450, 450)
+#         self.monitor_dimensions = (1920, 1080)
+#         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (3*self.monitor_dimensions[0]/4-self.window_dimensions[0]/2, self.monitor_dimensions[1]/2-self.window_dimensions[1]/2)
 
-        pygame.init()
+#         pygame.init()
 
-        self.root = pygame.display.set_mode(self.window_dimensions)
-        pygame.display.set_caption('Rocket Simulation')
+#         self.root = pygame.display.set_mode(self.window_dimensions)
+#         pygame.display.set_caption('Rocket Simulation')
 
-        self.ui_manager = pygame_gui.UIManager(self.window_dimensions, 'data/themes/simulation_theme.json')
+#         self.ui_manager = pygame_gui.UIManager(self.window_dimensions, 'data/themes/simulation_theme.json')
 
-        title_object_id = pygame_gui.core.ObjectID(class_id='@title_labels')
+#         title_object_id = pygame_gui.core.ObjectID(class_id='@title_labels')
 
-        self.title_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, self.window_dimensions[0], 80), text=f'Simulation Data for {self.rocket.name}', object_id=title_object_id, manager=self.ui_manager)
+#         self.title_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, self.window_dimensions[0], 80), text=f'Simulation Data for {self.rocket.name}', object_id=title_object_id, manager=self.ui_manager)
 
-        self.flight_info_labels = {}
+#         self.flight_info_labels = {}
 
-        for key in self.flight_info:
-            self.flight_info_labels.update({key: pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 85 + list(self.flight_info.keys()).index(key)*50, self.window_dimensions[0], 50), text=f"{key}: {self.flight_info[key]}", manager=self.ui_manager)})
+#         for key in self.flight_info:
+#             self.flight_info_labels.update({key: pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 85 + list(self.flight_info.keys()).index(key)*50, self.window_dimensions[0], 50), text=f"{key}: {self.flight_info[key]}", manager=self.ui_manager)})
 
-        self.create_graphs()
+#         self.create_graphs()
 
-        self.clock = pygame.time.Clock()
+#         self.clock = pygame.time.Clock()
 
-        while self.alive:
-            self.time_delta = self.clock.tick(60)/1000
+#         while self.alive:
+#             self.time_delta = self.clock.tick(60)/1000
 
-            self.handle_events()
+#             self.handle_events()
 
-            self.render()
+#             self.render()
         
-        pygame.quit()
+#         pygame.quit()
     
-    def handle_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.close()
-                return None
+#     def handle_events(self):
+#         for event in pygame.event.get():
+#             if event.type == pygame.QUIT:
+#                 self.close()
+#                 return None
 
-            self.ui_manager.process_events(event)
+#             self.ui_manager.process_events(event)
         
-        self.ui_manager.update(self.time_delta)
+#         self.ui_manager.update(self.time_delta)
     
-    def render(self):
-        plt.draw()
-        plt.pause(0.001)
+#     def render(self):
+#         plt.draw()
+#         plt.pause(0.001)
 
-        self.root.fill(self.bg_colour)
+#         self.root.fill(self.bg_colour)
 
-        self.ui_manager.draw_ui(self.root)
+#         self.ui_manager.draw_ui(self.root)
 
-        pygame.display.update()
+#         pygame.display.update()
     
-    def close(self, *args):
-        self.alive = False
+#     def close(self, *args):
+#         self.alive = False
     
-    def get_flight_data(self):
-        self.simulator = rocket_simulator.Simulator(self.rocket)
-        self.flight_data = self.simulator.simulate()
+#     def get_flight_data(self):
+#         self.simulator = rocket_simulator.Simulator(self.rocket)
+#         self.simulator.flight_data = self.simulator.simulate()
 
-        burnout_time = self.flight_data['time'][-1]
-        for i, fuel in enumerate(self.flight_data['fuel']):
-            if fuel == 0:
-                burnout_time = self.flight_data['time'][i]
-                break
+#         burnout_time = self.simulator.flight_data['time'][-1]
+#         for i, fuel in enumerate(self.simulator.flight_data['fuel']):
+#             if fuel == 0:
+#                 burnout_time = self.simulator.flight_data['time'][i]
+#                 break
         
-        # Convert negative values to postive so an absolute maximum value can be found
-        speed = [abs(x) for x in self.flight_data['velocity']]
-        proper_acceleration = [abs(x) for x in self.flight_data['acceleration']]
-        proper_g_force = [abs(x) for x in self.flight_data['g-force']]
+#         # Convert negative values to postive so an absolute maximum value can be found
+#         speed = [abs(x) for x in self.simulator.flight_data['velocity']]
+#         proper_acceleration = [abs(x) for x in self.simulator.flight_data['acceleration']]
+#         proper_g_force = [abs(x) for x in self.simulator.flight_data['g-force']]
 
-        self.flight_info = {
-            'Total Flight Time': f"{round(self.flight_data['time'][-1], 3)} s",
-            'Motor Burnout Time': f"{round(burnout_time, 3)} s",
-            'Maximum Altitude': f"{round(max(self.flight_data['altitude']), 3)} m",
-            'Maximum Speed': f"{round(max(speed), 3)} m/s",
-            'Maximum Acceleration': f"{round(max(proper_acceleration), 3)} m/s^2",
-            'Maximum G-Force': f"{round(max(proper_g_force), 3)} G's"
-        }
+#         self.flight_info = {
+#             'Total Flight Time': f"{round(self.simulator.flight_data['time'][-1], 3)} s",
+#             'Motor Burnout Time': f"{round(burnout_time, 3)} s",
+#             'Maximum Altitude': f"{round(max(self.simulator.flight_data['altitude']), 3)} m",
+#             'Maximum Speed': f"{round(max(speed), 3)} m/s",
+#             'Maximum Acceleration': f"{round(max(proper_acceleration), 3)} m/s^2",
+#             'Maximum G-Force': f"{round(max(proper_g_force), 3)} G's"
+#         }
     
-    def create_graphs(self):
-        fig = plt.figure(figsize=(10, 8), tight_layout=True)
-        fig.canvas.mpl_connect('close_event', self.close)
+#     def create_graphs(self):
+#         fig = plt.figure(figsize=(10, 8), tight_layout=True)
+#         fig.canvas.mpl_connect('close_event', self.close)
 
-        unit = ''
-        for i, key in enumerate(self.flight_data):
-            if key == 'altitude':
-                unit = 'm'
-            elif key == 'velocity':
-                unit = 'm/s'
-            elif key == 'acceleration':
-                unit = 'm/s^2'
-            elif key == 'g-force':
-                unit = 'G\'s'
-            elif key == 'thrust' or key == 'drag':
-                unit = 'N'
-            elif key == 'mass':
-                unit = 'kg'
-            if key != 'time':
-                ax = fig.add_subplot(math.ceil(len(self.flight_data)/2), 2, i)
-                ax.plot(self.flight_data['time'], self.flight_data[key])
-                ax.set_xlabel('Time (s)')
-                ax.set_ylabel(f'{key.capitalize()} ({unit})')
+#         unit = ''
+#         for i, key in enumerate(self.simulator.flight_data):
+#             if key == 'altitude':
+#                 unit = 'm'
+#             elif key == 'velocity':
+#                 unit = 'm/s'
+#             elif key == 'acceleration':
+#                 unit = 'm/s^2'
+#             elif key == 'g-force':
+#                 unit = 'G\'s'
+#             elif key == 'thrust' or key == 'drag':
+#                 unit = 'N'
+#             elif key == 'mass':
+#                 unit = 'kg'
+#             if key != 'time':
+#                 ax = fig.add_subplot(math.ceil(len(self.simulator.flight_data)/2), 2, i)
+#                 ax.plot(self.simulator.flight_data['time'], self.simulator.flight_data[key])
+#                 ax.set_xlabel('Time (s)')
+#                 ax.set_ylabel(f'{key.capitalize()} ({unit})')
         
-        plt.ion()
-        plt.show()
+#         plt.ion()
+#         plt.show()
 
 
 class SimulationPlayer():
@@ -861,6 +883,8 @@ class SimulationPlayer():
         self.original_rocket = rocket
 
         self.time_step = 0
+
+        self.current_stage = 0
 
         self.rocket_angle = -math.pi / 2
         self.paused = True
@@ -901,7 +925,7 @@ class SimulationPlayer():
             if not self.paused:
                 self.time_step += 1
 
-            self.update_rocket_angle()
+            self.update_rocket_state()
 
             self.handle_events()
 
@@ -930,7 +954,7 @@ class SimulationPlayer():
     def render(self):
         self.root.fill(self.bg_colour)
 
-        rocket_renderer.render_rocket_simulation(current_rocket=self.simulator.rocket_at_stage[0], flight_data=self.flight_data, time_step=self.time_step, root=self.root, angle=self.rocket_angle, container=self.rocket_container)
+        rocket_renderer.render_rocket_simulation(current_rocket=self.simulator.rocket_at_stage[self.current_stage], flight_data=self.simulator.flight_data, time_step=self.time_step, root=self.root, angle=self.rocket_angle, container=self.rocket_container)
 
         self.ui_manager.draw_ui(self.root)
 
@@ -938,33 +962,37 @@ class SimulationPlayer():
 
     def get_flight_data(self):
         self.simulator = rocket_simulator.Simulator(self.original_rocket)
-        self.flight_data = self.simulator.simulate()
+        self.simulator.simulate()
 
-        burnout_time = self.flight_data['time'][-1]
-        for i, fuel in enumerate(self.flight_data['fuel']):
+        burnout_time = self.simulator.flight_data['time'][-1]
+        for i, fuel in enumerate(self.simulator.flight_data['fuel']):
             if fuel == 0:
-                burnout_time = self.flight_data['time'][i]
+                burnout_time = self.simulator.flight_data['time'][i]
                 break
         
-        self.length_of_data = len(self.flight_data['time'])
+        self.length_of_data = len(self.simulator.flight_data['time'])
 
         # Convert negative values to postive so an absolute maximum value can be found
-        speed = [abs(x) for x in self.flight_data['velocity']]
-        proper_acceleration = [abs(x) for x in self.flight_data['acceleration']]
-        proper_g_force = [abs(x) for x in self.flight_data['g-force']]
+        speed = [abs(x) for x in self.simulator.flight_data['velocity']]
+        proper_acceleration = [abs(x) for x in self.simulator.flight_data['acceleration']]
+        proper_g_force = [abs(x) for x in self.simulator.flight_data['g-force']]
 
         self.flight_info = {
-            'Total Flight Time': f"{round(self.flight_data['time'][-1], 3)} s",
+            'Total Flight Time': f"{round(self.simulator.flight_data['time'][-1], 3)} s",
             'Motor Burnout Time': f"{round(burnout_time, 3)} s",
-            'Maximum Altitude': f"{round(max(self.flight_data['altitude']), 3)} m",
+            'Maximum Altitude': f"{round(max(self.simulator.flight_data['altitude']), 3)} m",
             'Maximum Speed': f"{round(max(speed), 3)} m/s",
             'Maximum Acceleration': f"{round(max(proper_acceleration), 3)} m/s^2",
             'Maximum G-Force': f"{round(max(proper_g_force), 3)} G's"
         }
     
+    def update_rocket_state(self):
+        self.current_stage = self.simulator.flight_data['stage'][self.time_step]
+
+        self.update_rocket_angle()
+
     def update_rocket_angle(self):
-        apoapsis_altitude = max(self.flight_data['altitude'])
-        apoapsis_time_step = self.flight_data['altitude'].index(apoapsis_altitude)
+        apoapsis_time_step = self.simulator.flight_events['apoapsis']
         if self.time_step <= apoapsis_time_step:
             self.rocket_angle = (-math.pi / 2) - (self.time_step/apoapsis_time_step) * math.pi/2
         else:

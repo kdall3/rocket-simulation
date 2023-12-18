@@ -36,6 +36,10 @@ def render_rocket_editor(rocket, root, container, font=None, auto_zoom=True, zoo
 
         part.render(root=root, rocket=rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=normal_line_width, selected_line_width=selected_line_width, angle=angle)
         
+        if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
+            length_rendered += part.length * zoom
+
+        # Stage numbering
         if show_stages and font is not None:
             current_part_stage = None
             for stage_number, stage_ids in enumerate(rocket.stages):
@@ -49,8 +53,6 @@ def render_rocket_editor(rocket, root, container, font=None, auto_zoom=True, zoo
                 text_rect = stage_number_surface.get_rect(center = part_middle)
 
                 root.blit(stage_number_surface, text_rect)
-        if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
-            length_rendered += part.length * zoom
 
 
 def render_rocket_simulation(current_rocket, flight_data, time_step, angle, root, container, zoom_multiplier=0.9, line_width=2):  # time_step is how many steps of the simulation have been rendered since the start of the data
@@ -76,21 +78,19 @@ def render_rocket_simulation(current_rocket, flight_data, time_step, angle, root
         zoom = 1
 
     total_length = total_length * zoom
-    
-    print(zoom)
 
     length_rendered = 0
-    
+
     # SIMULATION
     for part in current_rocket.parts:
         if not hasattr(part, 'render'):
             continue
 
-        print(length_rendered, total_length)
-
         if check_part_type(part, [Engine]):
             if part.get_stage(current_rocket) == flight_data['stage'][time_step]:
                 part.render(root=root, rocket=current_rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=line_width, selected_line_width=line_width, angle=angle, burning=True, fuel=flight_data["fuel"][time_step])
+            else:
+                part.render(root=root, rocket=current_rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=line_width, selected_line_width=line_width, angle=angle, burning=False, fuel=1)
         else:
             part.render(root=root, rocket=current_rocket, zoom=zoom, length_rendered=length_rendered, total_length=total_length, graphic_centre=container_centre, normal_line_width=line_width, selected_line_width=line_width, angle=angle)
         

@@ -1,6 +1,7 @@
 from rocket_parts import *
 import math
 import time
+import copy
 
 g = 9.81
 
@@ -53,7 +54,7 @@ class Simulator():
         self.fuel = 1
         self.mass = 0
 
-        self.stage = 0
+        self.current_stage = 0
         self.max_stage = len(rocket.stages) - 1
 
         self.parts_to_part_ids = {}
@@ -75,9 +76,15 @@ class Simulator():
             'mass': [],
             'stage': []
         }
+
+        self.flight_events = {
+            'propellant depletion': 0,
+            'apoapsis': 0
+        }
     
     def simulate(self):
-        self.rocket_at_stage.append(self.rocket)
+        self.rocket_at_stage.append(copy.deepcopy(self.rocket))
+        print(f"ROCKET: {self.rocket.parts}")
 
         while True:
             self.step()
@@ -85,53 +92,64 @@ class Simulator():
             self.update_flight_data()
 
             if self.altitude < self.altitude_cutoff:
-                return self.flight_data
+                self.end_simulation()
+                break
 
             self.time += self.time_increment
+    
+    def end_simulation(self):
+        apoapsis_altitude = max(self.flight_data['altitude'])
+        self.flight_events['apoapsis'] = self.flight_data['altitude'].index(apoapsis_altitude)
+
+        for step, fuel in enumerate(self.flight_data['fuel']):
+            if fuel == 0 and self.flight_data['fuel'][step-1] != 0:
+                self.flight_events['propellant depletion']
+        
+    def stage(self):
+        if self.current_stage != self.max_stage:
+            self.current_stage += 1
+            for part_id in self.rocket.stages[self.current_stage]:
+                part_in_stage = self.parts_to_part_ids[part_id]
+                if isinstance(part_in_stage, Decoupler):
+                    reached_decoupler = False
+                    for part in copy.deepcopy(self.rocket.parts):  # Iterate through a new copy of parts so items are not skipped when an item is deleted
+                        if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
+                            if part.local_part_id == part_in_stage.local_part_id:
+                                reached_decoupler = True
+                            if reached_decoupler:  # Delete part and children
+                                children = get_children(part, self.rocket)
+                                self.rocket.parts.remove(self.rocket.get_part_with_part_id(part.local_part_id))
+
+                                for child in children:
+                                    self.rocket.parts.remove(child)
+                    
+                    self.mass = 0
+                    for part in self.rocket.parts:
+                        self.mass += part.mass
+                elif isinstance(part_in_stage, Engine):
+                    self.engine = part_in_stage
+                    self.fuel = 1
+                    self.thrust = self.engine.average_thrust
+        
+            self.rocket_at_stage.append(self.rocket)
     
     def step(self):
         self.thrust = 0
         if self.engine is not None:
             fuel_decrease = self.time_increment / self.engine.burn_time
-            if self.fuel < fuel_decrease and self.fuel > 0: # Engine burning partway during the time step
+            if self.fuel < fuel_decrease and self.fuel > 0:  # Engine burning partway during the time step
                 self.thrust = self.engine.average_thrust * self.fuel/fuel_decrease
                 self.fuel = 0
 
                 self.mass -= self.fuel * self.engine.propellant_mass
 
-            elif self.fuel <= 0: # Engine not burning at all during the time step
+            elif self.fuel <= 0:  # Engine not burning at all during the time step
                 self.thrust = 0
                 self.fuel = 0 
 
-                if self.stage != self.max_stage:  # STAGE
-                    self.stage += 1
-                    for part_id in self.rocket.stages[self.stage]:
-                        part_in_stage = self.parts_to_part_ids[part_id]
-                        if isinstance(part_in_stage, Decoupler):
-                            reached_decoupler = False
-                            for part in self.rocket.parts:
-                                if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
-                                    if part.local_part_id == part_in_stage.local_part_id:
-                                        reached_decoupler = True
-                                    elif reached_decoupler:
-                                        children = get_children(part, self.rocket)
-                                        self.rocket.parts.remove(part)
+                self.stage()
 
-                                        for child in children:
-                                            self.rocket.parts.remove(child)
-                            
-                            self.mass = 0
-                            for part in self.rocket.parts:
-                                self.mass += part.mass
-                        elif isinstance(part_in_stage, Engine):
-                            self.engine = part_in_stage
-                            self.fuel = 1
-                            self.thrust = self.engine.average_thrust
-                
-                    self.rocket_at_stage.append(self.rocket)
-                    print(self.rocket.parts)
-
-            else: # Engine burning all the way during the time step
+            else:  # Engine burning all the way during the time step
                 self.thrust = self.engine.average_thrust
                 self.fuel -= fuel_decrease
 
@@ -158,4 +176,4 @@ class Simulator():
         self.flight_data['drag'].append(self.drag)
         self.flight_data['fuel'].append(self.fuel)
         self.flight_data['mass'].append(self.mass)
-        self.flight_data['stage'].append(self.stage)
+        self.flight_data['stage'].append(self.current_stage)

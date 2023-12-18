@@ -64,6 +64,11 @@ class Rocket():
         self.new_part_id = 0
 
         self.stages = [] # List of lists of part ids
+    
+    def get_part_with_part_id(self, part_id):
+        for part in self.parts:
+            if part.local_part_id == part_id:
+                return part
 
 
 class BodyTube(RocketPart):
@@ -220,7 +225,7 @@ class Engine(RocketPart):
             if self.mass_override:
                 self.mass = get_entry(master, 'mass', self.mass)
     
-    def render(self, rocket, root, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width, angle=0, burning=False, fuel=1):  # burning and fuel only used for simulation playback
+    def render(self, rocket, root, zoom, length_rendered, total_length, graphic_centre, normal_line_width, selected_line_width, angle=0, burning=False, fuel=0):  # burning and fuel only used for simulation playback
         for part in rocket.parts:
             if part.local_part_id == self.parent_id:
                 self.parent = part
@@ -241,7 +246,10 @@ class Engine(RocketPart):
             self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
             self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
 
-            pygame.draw.polygon(root, self.colour, self.vertices, line_width)
+            if fuel == 1:
+                pygame.draw.polygon(root, self.colour, self.vertices, 0)
+            else:
+                pygame.draw.polygon(root, self.colour, self.vertices, line_width)
 
         elif burning:
             flame_vert_count = 10
@@ -286,7 +294,10 @@ class Engine(RocketPart):
             self.hit_box = geometry.rotate_poly(self.hit_box, graphic_centre, angle)
             self.vertices = geometry.rotate_poly(self.vertices, graphic_centre, angle)
 
-            pygame.draw.polygon(root, self.colour, self.vertices, line_width)
+            if fuel == 1:
+                pygame.draw.polygon(root, self.colour, self.vertices, 0)
+            else:
+                pygame.draw.polygon(root, self.colour, self.vertices, line_width)
 
 
 class Fins(RocketPart):
