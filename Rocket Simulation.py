@@ -12,6 +12,10 @@ import rocket_simulator
 from rocket_parts import *
 
 
+class Queue():
+    pass
+
+
 class Stack():
     def __init__(self, size):
         self.stack = []
@@ -889,6 +893,11 @@ class SimulationPlayer():
         self.rocket_angle = -math.pi / 2
         self.paused = True
 
+        self.slider_button_pos = [0, 0]
+        self.slider_button_radius = 10
+        self.slider_button_pressed = False
+        self.slider_dimensions = [(200, 610), (1300, 610)]
+
         self.bg_colour = (36, 36, 36)
         self.part_colour = (255, 255, 255)
 
@@ -915,15 +924,25 @@ class SimulationPlayer():
         label_object_id = pygame_gui.core.ObjectID(class_id='@text_entry_labels')
         play_button_object_id = pygame_gui.core.ObjectID(class_id='@play_buttons')
 
-        self.play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(700, 575, 100, 100), text='', manager=self.ui_manager, object_id=play_button_object_id)
+        self.stage_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(200, 30, 100, 30), text='Stage: 0', manager=self.ui_manager)
+
+        self.play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(720, 630, 60, 60), text='', manager=self.ui_manager, object_id=play_button_object_id)
 
         self.clock = pygame.time.Clock()
 
         while self.alive:
             self.time_delta = self.clock.tick(60)/1000
 
-            if not self.paused:
+            if not self.paused and not self.slider_button_pressed:
                 self.time_step += 1
+            
+            mouse_pos = pygame.mouse.get_pos()
+            if self.slider_dimensions[0][0] <= mouse_pos[0] <= self.slider_dimensions[1][0] and self.slider_button_pressed:
+                self.time_step = int(((mouse_pos[0] - self.slider_dimensions[0][0]) / (self.slider_dimensions[1][0] - self.slider_dimensions[0][0])) * self.length_of_data)
+            elif self.slider_button_pressed and mouse_pos[0] > self.slider_dimensions[1][0]:
+                self.time_step = self.length_of_data - 1
+            elif self.slider_button_pressed and mouse_pos[0] < self.slider_dimensions[0][0]:
+                self.time_step = 0
 
             self.update_rocket_state()
 
@@ -941,6 +960,17 @@ class SimulationPlayer():
                 self.close()
                 return None
 
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1: # Left click
+                    mouse_pos = pygame.mouse.get_pos()
+
+                    if geometry.check_point_in_circle(mouse_pos, self.slider_button_pos, self.slider_button_radius):
+                        self.slider_button_pressed = True
+            
+            if event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1: # Left click released
+                    self.slider_button_pressed = False
+
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == self.play_button:
                     self.paused = not self.paused
@@ -957,6 +987,7 @@ class SimulationPlayer():
         rocket_renderer.render_rocket_simulation(current_rocket=self.simulator.rocket_at_stage[self.current_stage], flight_data=self.simulator.flight_data, time_step=self.time_step, root=self.root, angle=self.rocket_angle, container=self.rocket_container)
 
         self.ui_manager.draw_ui(self.root)
+        self.slider_button_pos = rocket_renderer.draw_slider(self.root, self.slider_dimensions[0], self.slider_dimensions[1], self.time_step/self.length_of_data, button_radius=self.slider_button_radius)
 
         pygame.display.update()
 
@@ -988,15 +1019,22 @@ class SimulationPlayer():
     
     def update_rocket_state(self):
         self.current_stage = self.simulator.flight_data['stage'][self.time_step]
+        self.stage_label.set_text(f'Stage: {self.current_stage}')
 
         self.update_rocket_angle()
 
     def update_rocket_angle(self):
         apoapsis_time_step = self.simulator.flight_events['apoapsis']
-        if self.time_step <= apoapsis_time_step:
-            self.rocket_angle = (-math.pi / 2) - (self.time_step/apoapsis_time_step) * math.pi/2
+        apoapsis_curve_steps = 0.1 *  self.length_of_data  # Number of time steps before and after apoapsis that the rocket should rotate
+        if self.time_step <= apoapsis_time_step - apoapsis_curve_steps:
+            self.rocket_angle = (-math.pi / 2)
+        elif self.time_step >= apoapsis_time_step + apoapsis_curve_steps:
+            self.rocket_angle = (-math.pi * 3/2)
         else:
-            self.rocket_angle = (-math.pi) - ((self.time_step - apoapsis_time_step)/(self.length_of_data - apoapsis_time_step)) * math.pi/2
+            if self.time_step <= apoapsis_time_step:
+                self.rocket_angle = (-math.pi / 2) - (1- ((apoapsis_time_step - self.time_step)/apoapsis_curve_steps)) * math.pi/2
+            else:
+                self.rocket_angle = (-math.pi) - ((self.time_step - apoapsis_time_step)/apoapsis_curve_steps) * math.pi/2
 
 
 if __name__ == "__main__":

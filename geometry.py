@@ -2,6 +2,14 @@ import numpy as np
 import math
 
 
+def get_distance_vector(p1, p2):
+    return [p2[0] - p1[0], p2[1] - p1[1]]
+
+
+def get_absolute_distance(p1, p2):
+    return math.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
+
+
 def pygame_box_to_poly(box):
     return [[box[0], box[1]], [box[0] + box[2], box[1]], [box[0] + box[2], box[1] + box[3]], [box[0], box[1] + box[3]]]
 
@@ -54,6 +62,10 @@ def check_point_in_box(point, rects):
                 return True
             else:
                 return False
+
+
+def check_point_in_circle(point, circle_centre, circle_radius):
+    return get_absolute_distance(point, circle_centre) <= circle_radius
 
 
 def check_point_in_poly(point, poly):

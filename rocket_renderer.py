@@ -55,7 +55,7 @@ def render_rocket_editor(rocket, root, container, font=None, auto_zoom=True, zoo
                 root.blit(stage_number_surface, text_rect)
 
 
-def render_rocket_simulation(current_rocket, flight_data, time_step, angle, root, container, zoom_multiplier=0.9, line_width=2):  # time_step is how many steps of the simulation have been rendered since the start of the data
+def render_rocket_simulation(current_rocket, flight_data, time_step, angle, root, container, zoom_multiplier=0.9, line_width=2, reference_line_separation=50):  # time_step is how many steps of the simulation have been rendered since the start of the data
     # ZOOM
     container_centre = geometry.get_box_centre(container)
 
@@ -81,7 +81,7 @@ def render_rocket_simulation(current_rocket, flight_data, time_step, angle, root
 
     length_rendered = 0
 
-    # SIMULATION
+    # ROCKET
     for part in current_rocket.parts:
         if not hasattr(part, 'render'):
             continue
@@ -96,3 +96,22 @@ def render_rocket_simulation(current_rocket, flight_data, time_step, angle, root
         
         if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
             length_rendered += part.length * zoom
+        
+    # ALTITUDE REFERENCE LINES
+    current_altitude = flight_data['altitude'][time_step]        
+    
+    for line_altitude in range(max(flight_data['altitude']), reference_line_separation):
+        y_coord = (current_altitude - line_altitude) * zoom + container_centre[1]
+        if container[1] + container[3] >= y_coord >= container[1]:
+            pygame.draw.line(root, (100, 100, 100), (container[0], y_coord), (container[0] + container[2], y_coord))  # NOT FINISHED
+
+
+def draw_slider(root, start, end, position, colour=(255, 255, 255), line_width=3, button_radius=10):  # position should be 0 -> 1
+    pygame.draw.line(root, colour, start, end, width=line_width)
+
+    line_vector = geometry.get_distance_vector(start, end)
+    circle_pos = [line_vector[0] * position + start[0], line_vector[1] * position + start[1]]
+
+    pygame.draw.circle(root, colour, circle_pos, button_radius)
+
+    return circle_pos
