@@ -531,6 +531,9 @@ class Editor():
         
         self.ui_manager.update(self.time_delta)
 
+        if len(self.rocket.parts) == 0:
+            self.add_part(BodyTube)
+
     def render(self):
         self.root.fill(self.bg_colour)
 
@@ -602,15 +605,29 @@ class Editor():
                 if len(stage) == 0:
                     self.rocket.stages.remove(stage)
     
-    def get_last_part_in_whitelist(self, part_whitelist):
+    def get_last_part_index_without_child(self, parent_whitelist, child_blacklist):  # Returns the index of the last part that is in the whitelist and does not have a child in the child whitelist
+        reversed_parts = copy.deepcopy(self.rocket.parts)
+        reversed_parts.reverse()
+
+        saftey_part_index = 0  # In case all parts have a child
+
         index = -1
-        while True:
-            if check_part_type(self.rocket.parts[index], part_whitelist):
-                return len(self.rocket.parts) + index
-            if abs(index) > len(self.rocket.parts):
-                return 0
+        for part in reversed_parts:
+            if type(part) in parent_whitelist:
+                children = get_children(part, self.rocket)
+                for child in children:
+                    if type(child) in child_blacklist:
+                        saftey_part_index = index
+                        break
+                else:
+                    return index
+
             index -= 1
-    
+        
+
+
+        return saftey_part_index
+
     def update_all_parts(self):
         for part in self.rocket.parts:
             if hasattr(part, 'editor_update_variables'):
@@ -626,16 +643,18 @@ class Editor():
         RocketLoader('editor', 'editor')
 
     def add_part(self, Part):
-        if check_part_type(Part, [BodyTube, NoseCone]):
+        if Part is BodyTube:
             self.rocket.parts.append(Part(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
-        elif check_part_type(Part, [Decoupler]):
+        elif Part is NoseCone:
+            self.rocket.parts.insert(0, Part(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
+        elif Part is Decoupler:
             self.rocket.parts.append(Part(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
             self.rocket.stages.append([self.rocket.new_part_id])
-        elif check_part_type(Part, [Engine]):
-            self.rocket.parts.append(Engine(self.rocket.parts[self.get_last_part_in_whitelist([BodyTube, NoseCone])].local_part_id, local_part_id=self.rocket.new_part_id))
+        elif Part is Engine:
+            self.rocket.parts.append(Engine(self.rocket.parts[self.get_last_part_index_without_child([BodyTube, NoseCone], [Engine])].local_part_id, local_part_id=self.rocket.new_part_id))
             self.rocket.stages.append([self.rocket.new_part_id])
-        elif check_part_type(Part, [Fins]):
-            self.rocket.parts.append(Fins(self.rocket.parts[self.get_last_part_in_whitelist([BodyTube, NoseCone])].local_part_id, local_part_id=self.rocket.new_part_id))
+        elif Part is Fins:
+            self.rocket.parts.append(Fins(self.rocket.parts[self.get_last_part_index_without_child([BodyTube, NoseCone], [Fins])].local_part_id, local_part_id=self.rocket.new_part_id))
         
         self.rocket.new_part_id += 1
 
@@ -1120,6 +1139,10 @@ class SimulationPlayer():
     def update_rocket_angle(self):
         apoapsis_time_step = self.simulator.flight_events['apoapsis']
         apoapsis_curve_steps = 0.1 *  self.length_of_data  # Number of time steps before and after apoapsis that the rocket should rotate
+        min_segment = min((apoapsis_time_step, self.length_of_data - apoapsis_time_step))
+        if min_segment < apoapsis_curve_steps:  # If curve starts before the simulation starts, adjust the curve length
+            apoapsis_curve_steps = min_segment
+
         if self.time_step <= apoapsis_time_step - apoapsis_curve_steps:
             self.rocket_angle = (-math.pi / 2)
         elif self.time_step >= apoapsis_time_step + apoapsis_curve_steps:
@@ -1200,7 +1223,10 @@ class SimulationSettings:
         for i, (setting, value) in enumerate(self.settings.items()):
             self.settings_elements.update({f'{setting} label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(100, i*40+100, 150, 30), text=f'{setting.capitalize()} ({self.settings_units[setting]}):', object_id=entry_label_object_id, manager=self.ui_manager)})
             self.settings_elements.update({f'{setting} entry': pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect(250, i*40+92, 350, 46), manager=self.ui_manager, initial_text=str(value))})
-            self.settings_elements[f'{setting} entry'].allowed_characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '-']
+            self.settings_elements[f'{setting} entry'].allowed_characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']  # Default character whitelist
+        
+        # Character whitelist exceptions
+        self.settings_elements['altitude cutoff entry'].allowed_characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '-']
 
         self.clock = pygame.time.Clock()
 

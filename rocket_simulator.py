@@ -1,6 +1,5 @@
 from rocket_parts import *
 import math
-import time
 import copy
 
 def get_drag_coefficient(part):
@@ -129,8 +128,8 @@ class Simulator():
                     self.engine = part_in_stage
                     self.fuel = 1
                     self.thrust = self.engine.average_thrust
-        
-            self.rocket_at_stage.append(self.rocket)
+
+            self.rocket_at_stage.append(copy.deepcopy(self.rocket))
     
     def step(self):
         self.thrust = 0
