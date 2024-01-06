@@ -48,6 +48,24 @@
         }
     },
 
+    "@reverse_buttons":
+    {
+        "misc":
+        {
+            "shadow_width": "5",
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10"
+        },
+
+        "images":
+        {
+            "normal_image":
+            {
+                "path": "data/images/reverse.png"
+            }
+        }
+    },
+
     "@play_buttons":
     {
         "misc":
@@ -62,6 +80,60 @@
             "normal_image":
             {
                 "path": "data/images/pause-play.png"
+            }
+        }
+    },
+
+    "@forward_buttons":
+    {
+        "misc":
+        {
+            "shadow_width": "5",
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10"
+        },
+
+        "images":
+        {
+            "normal_image":
+            {
+                "path": "data/images/forward.png"
+            }
+        }
+    },
+
+    "@zoom_in_buttons":
+    {
+        "misc":
+        {
+            "shadow_width": "5",
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10"
+        },
+
+        "images":
+        {
+            "normal_image":
+            {
+                "path": "data/images/plus.png"
+            }
+        }
+    },
+
+    "@zoom_out_buttons":
+    {
+        "misc":
+        {
+            "shadow_width": "5",
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10"
+        },
+
+        "images":
+        {
+            "normal_image":
+            {
+                "path": "data/images/minus.png"
             }
         }
     },
@@ -84,6 +156,83 @@
             "name": "Rubik",
             "size": "20",
             "bold": "1",
+            "italic": "0"
+        }
+    },
+
+    "@info_labels":
+    {
+        "font":
+        {
+            "name": "Rubik",
+            "size": "15",
+            "bold": "0",
+            "italic": "0"
+        },
+
+        "misc":
+        {
+            "text_horiz_alignment": "left"
+        }
+    },
+
+    "@right_info_labels":
+    {
+        "font":
+        {
+            "name": "Rubik",
+            "size": "15",
+            "bold": "0",
+            "italic": "0"
+        },
+
+        "misc":
+        {
+            "text_horiz_alignment": "right"
+        }
+    },
+
+    "@settings_title_labels":
+    {
+        "font":
+        {
+            "name": "Rubik",
+            "size": "30",
+            "bold": "0",
+            "italic": "0"
+        }
+    },
+
+    "@text_entry_labels":
+    {
+        "font":
+        {
+            "name": "Rubik",
+            "size": "15",
+            "bold": "0",
+            "italic": "0"
+        },
+
+        "misc":
+        {
+            "text_horiz_alignment": "left"
+        }
+    },
+
+    "text_entry_line":
+    {
+        "misc":
+        {
+            "shadow_width": "5",
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10"
+        },
+
+        "font":
+        {
+            "name": "Rubik",
+            "size": "15",
+            "bold": "0",
             "italic": "0"
         }
     }

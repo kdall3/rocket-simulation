@@ -3,8 +3,6 @@ import math
 import time
 import copy
 
-g = 9.81
-
 def get_drag_coefficient(part):
     if isinstance(part, BodyTube):
         angle = 90
@@ -19,11 +17,10 @@ def get_drag_force(drag_coefficient, air_density, velocity, area):
     return 0.5 * drag_coefficient * air_density * velocity**2 * area
 
 class Simulator():
-    def __init__(self, rocket, air_density=1.225, time_increment=0.01, altitude_cutoff=-10):
-        self.rocket = rocket
-        self.air_density = air_density
-        self.time_increment = time_increment
-        self.altitude_cutoff = altitude_cutoff
+    def __init__(self, rocket, settings):
+        self.rocket = copy.deepcopy(rocket)
+
+        self.settings = settings
 
         self.engine = None
         self.nose = None
@@ -84,18 +81,20 @@ class Simulator():
     
     def simulate(self):
         self.rocket_at_stage.append(copy.deepcopy(self.rocket))
-        print(f"ROCKET: {self.rocket.parts}")
 
         while True:
             self.step()
 
             self.update_flight_data()
 
-            if self.altitude < self.altitude_cutoff:
+            # Cutoff logic
+            elapsed_time = len(self.flight_data['time']) * self.settings['time increment']
+
+            if self.altitude < self.settings['altitude cutoff'] or elapsed_time > self.settings['time cutoff']:
                 self.end_simulation()
                 break
 
-            self.time += self.time_increment
+            self.time += self.settings['time increment']
     
     def end_simulation(self):
         apoapsis_altitude = max(self.flight_data['altitude'])
@@ -136,7 +135,7 @@ class Simulator():
     def step(self):
         self.thrust = 0
         if self.engine is not None:
-            fuel_decrease = self.time_increment / self.engine.burn_time
+            fuel_decrease = self.settings['time increment'] / self.engine.burn_time
             if self.fuel < fuel_decrease and self.fuel > 0:  # Engine burning partway during the time step
                 self.thrust = self.engine.average_thrust * self.fuel/fuel_decrease
                 self.fuel = 0
@@ -156,15 +155,15 @@ class Simulator():
                 self.mass -= fuel_decrease * self.engine.propellant_mass
 
         if self.velocity >= 0:
-            self.drag = 0.5 * self.air_density * self.velocity**2 * self.drag_coefficient_area_total * -1
+            self.drag = 0.5 * self.settings['air density'] * self.velocity**2 * self.drag_coefficient_area_total * -1
         else:
-            self.drag = 0.5 * self.air_density * self.velocity**2 * self.drag_coefficient_area_total
+            self.drag = 0.5 * self.settings['air density'] * self.velocity**2 * self.drag_coefficient_area_total
 
-        self.acceleration = (self.thrust + self.drag) / self.mass - g
-        self.velocity += self.acceleration * self.time_increment
-        self.altitude += self.velocity * self.time_increment
+        self.acceleration = (self.thrust + self.drag) / self.mass - self.settings['gravity acc']
+        self.velocity += self.acceleration * self.settings['time increment']
+        self.altitude += self.velocity * self.settings['time increment']
 
-        self.g_force = self.acceleration / g
+        self.g_force = self.acceleration / self.settings['gravity acc']
 
     def update_flight_data(self):
         self.flight_data['time'].append(self.time)

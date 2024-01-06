@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 import math
 import os
+import copy
 
 import geometry
 import db_controller
@@ -85,8 +86,6 @@ class MainMenu():
             self.handle_events()
 
             self.render()
-        
-        pygame.quit()
     
     def handle_events(self):
         for event in pygame.event.get():
@@ -132,9 +131,6 @@ class MainMenu():
         self.close()
 
         RocketLoader('main menu', 'simulator')
-
-    def view_simulation(self):
-        pass
 
 
 class RocketLoader():
@@ -192,8 +188,6 @@ class RocketLoader():
             self.handle_events()
 
             self.render()
-        
-        pygame.quit()
     
     def handle_events(self):
         for event in pygame.event.get():
@@ -587,12 +581,20 @@ class Editor():
             self.deselect_part(part)
     
     def delete_selected_part(self):
+        part = self.get_selected_part()
+        if part is not None:
+            self.deselect_part(part)
+            self.delete_part(part)
+
+    def delete_part(self, part_to_delete):
         for position, part in enumerate(self.rocket.parts):
-            if part.selected:
-                self.deselect_part(part)
+            if part.local_part_id == part_to_delete.local_part_id:
+                for child in get_children(part, self.rocket):
+                    self.delete_part(child)
+
                 del self.rocket.parts[position]
                 self.delete_part_from_stages(part)
-    
+
     def delete_part_from_stages(self, part):
         for stage in self.rocket.stages:
             if part.local_part_id in stage:
@@ -759,125 +761,128 @@ class Editor():
         self.open_info_panel()
 
 
-# class Simulation():
-#     def __init__(self, rocket):
-#         self.alive = True
+class SimulationData():
+    def __init__(self, rocket, simulator):
+        self.alive = True
 
-#         self.rocket = rocket
+        self.rocket = rocket
+        self.simulator = simulator
 
-#         self.bg_colour = (36, 36, 36)
+        self.bg_colour = (36, 36, 36)
 
-#         self.create_window()
+        self.create_window()
     
-#     def create_window(self):
-#         self.get_flight_data()
+    def create_window(self):
+        self.get_flight_data()
 
-#         self.window_dimensions = (450, 450)
-#         self.monitor_dimensions = (1920, 1080)
-#         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (3*self.monitor_dimensions[0]/4-self.window_dimensions[0]/2, self.monitor_dimensions[1]/2-self.window_dimensions[1]/2)
+        self.window_dimensions = (450, 450)
+        self.monitor_dimensions = (1920, 1080)
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (3*self.monitor_dimensions[0]/4-self.window_dimensions[0]/2, self.monitor_dimensions[1]/2-self.window_dimensions[1]/2)
 
-#         pygame.init()
+        pygame.init()
 
-#         self.root = pygame.display.set_mode(self.window_dimensions)
-#         pygame.display.set_caption('Rocket Simulation')
+        self.root = pygame.display.set_mode(self.window_dimensions)
+        pygame.display.set_caption('Rocket Simulation')
 
-#         self.ui_manager = pygame_gui.UIManager(self.window_dimensions, 'data/themes/simulation_theme.json')
+        self.ui_manager = pygame_gui.UIManager(self.window_dimensions, 'data/themes/simulation_theme.json')
 
-#         title_object_id = pygame_gui.core.ObjectID(class_id='@title_labels')
+        title_object_id = pygame_gui.core.ObjectID(class_id='@title_labels')
 
-#         self.title_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, self.window_dimensions[0], 80), text=f'Simulation Data for {self.rocket.name}', object_id=title_object_id, manager=self.ui_manager)
+        self.title_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, self.window_dimensions[0], 80), text=f'Simulation Data for {self.rocket.name}', object_id=title_object_id, manager=self.ui_manager)
 
-#         self.flight_info_labels = {}
+        self.flight_info_labels = {}
 
-#         for key in self.flight_info:
-#             self.flight_info_labels.update({key: pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 85 + list(self.flight_info.keys()).index(key)*50, self.window_dimensions[0], 50), text=f"{key}: {self.flight_info[key]}", manager=self.ui_manager)})
+        for key in self.flight_info:
+            self.flight_info_labels.update({key: pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 85 + list(self.flight_info.keys()).index(key)*50, self.window_dimensions[0], 50), text=f"{key}: {self.flight_info[key]}", manager=self.ui_manager)})
 
-#         self.create_graphs()
+        self.create_graphs()
 
-#         self.clock = pygame.time.Clock()
+        self.clock = pygame.time.Clock()
 
-#         while self.alive:
-#             self.time_delta = self.clock.tick(60)/1000
+        while self.alive:
+            self.time_delta = self.clock.tick(60)/1000
 
-#             self.handle_events()
+            self.handle_events()
 
-#             self.render()
+            self.render()
         
-#         pygame.quit()
+        pygame.quit()
     
-#     def handle_events(self):
-#         for event in pygame.event.get():
-#             if event.type == pygame.QUIT:
-#                 self.close()
-#                 return None
+    def handle_events(self):
+        for event in pygame.event.get():
+            # Exit function for pygame window not included, as the windows should be closed from the matplotlib window
 
-#             self.ui_manager.process_events(event)
+            self.ui_manager.process_events(event)
         
-#         self.ui_manager.update(self.time_delta)
+        self.ui_manager.update(self.time_delta)
     
-#     def render(self):
-#         plt.draw()
-#         plt.pause(0.001)
+    def render(self):
+        plt.draw()
+        plt.pause(0.001)
 
-#         self.root.fill(self.bg_colour)
+        self.root.fill(self.bg_colour)
 
-#         self.ui_manager.draw_ui(self.root)
+        self.ui_manager.draw_ui(self.root)
 
-#         pygame.display.update()
+        pygame.display.update()
     
-#     def close(self, *args):
-#         self.alive = False
-    
-#     def get_flight_data(self):
-#         self.simulator = rocket_simulator.Simulator(self.rocket)
-#         self.simulator.flight_data = self.simulator.simulate()
+    def close(self, *args):
+        self.alive = False
 
-#         burnout_time = self.simulator.flight_data['time'][-1]
-#         for i, fuel in enumerate(self.simulator.flight_data['fuel']):
-#             if fuel == 0:
-#                 burnout_time = self.simulator.flight_data['time'][i]
-#                 break
+        plt.close('all')
+    
+    def get_flight_data(self):
+        burnout_time = self.simulator.flight_data['time'][-1]
+        for i, fuel in enumerate(self.simulator.flight_data['fuel']):
+            if fuel == 0:
+                burnout_time = self.simulator.flight_data['time'][i]
+                break
         
-#         # Convert negative values to postive so an absolute maximum value can be found
-#         speed = [abs(x) for x in self.simulator.flight_data['velocity']]
-#         proper_acceleration = [abs(x) for x in self.simulator.flight_data['acceleration']]
-#         proper_g_force = [abs(x) for x in self.simulator.flight_data['g-force']]
+        self.length_of_data = len(self.simulator.flight_data['time'])
 
-#         self.flight_info = {
-#             'Total Flight Time': f"{round(self.simulator.flight_data['time'][-1], 3)} s",
-#             'Motor Burnout Time': f"{round(burnout_time, 3)} s",
-#             'Maximum Altitude': f"{round(max(self.simulator.flight_data['altitude']), 3)} m",
-#             'Maximum Speed': f"{round(max(speed), 3)} m/s",
-#             'Maximum Acceleration': f"{round(max(proper_acceleration), 3)} m/s^2",
-#             'Maximum G-Force': f"{round(max(proper_g_force), 3)} G's"
-#         }
+        # Convert negative values to postive so an absolute maximum value can be found
+        speed = [abs(x) for x in self.simulator.flight_data['velocity']]
+        proper_acceleration = [abs(x) for x in self.simulator.flight_data['acceleration']]
+        proper_g_force = [abs(x) for x in self.simulator.flight_data['g-force']]
+
+        self.flight_info = {
+            'Total Flight Time': f"{round(self.simulator.flight_data['time'][-1], 3)} s",
+            'Motor Burnout Time': f"{round(burnout_time, 3)} s",
+            'Maximum Altitude': f"{round(max(self.simulator.flight_data['altitude']), 3)} m",
+            'Maximum Speed': f"{round(max(speed), 3)} m/s",
+            'Maximum Acceleration': f"{round(max(proper_acceleration), 3)} m/s^2",
+            'Maximum G-Force': f"{round(max(proper_g_force), 3)} G's"
+        }
     
-#     def create_graphs(self):
-#         fig = plt.figure(figsize=(10, 8), tight_layout=True)
-#         fig.canvas.mpl_connect('close_event', self.close)
+    def create_graphs(self):
+        self.fig = plt.figure('Simulation Data', figsize=(10, 8), tight_layout=True)
+        self.fig.canvas.mpl_connect('close_event', self.close)
 
-#         unit = ''
-#         for i, key in enumerate(self.simulator.flight_data):
-#             if key == 'altitude':
-#                 unit = 'm'
-#             elif key == 'velocity':
-#                 unit = 'm/s'
-#             elif key == 'acceleration':
-#                 unit = 'm/s^2'
-#             elif key == 'g-force':
-#                 unit = 'G\'s'
-#             elif key == 'thrust' or key == 'drag':
-#                 unit = 'N'
-#             elif key == 'mass':
-#                 unit = 'kg'
-#             if key != 'time':
-#                 ax = fig.add_subplot(math.ceil(len(self.simulator.flight_data)/2), 2, i)
-#                 ax.plot(self.simulator.flight_data['time'], self.simulator.flight_data[key])
-#                 ax.set_xlabel('Time (s)')
-#                 ax.set_ylabel(f'{key.capitalize()} ({unit})')
+        unit = ''
+        for i, key in enumerate(self.simulator.flight_data):
+            if key == 'altitude':
+                unit = 'm'
+            elif key == 'velocity':
+                unit = 'm/s'
+            elif key == 'acceleration':
+                unit = 'm/s^2'
+            elif key == 'g-force':
+                unit = 'G\'s'
+            elif key == 'thrust' or key == 'drag':
+                unit = 'N'
+            elif key == 'mass':
+                unit = 'kg'
+            if key != 'time':
+                ax = self.fig.add_subplot(math.ceil(len(self.simulator.flight_data)/2), 2, i)
+                ax.plot(self.simulator.flight_data['time'], self.simulator.flight_data[key])
+                ax.set_xlabel('Time (s)')
+                if key != 'stage':  # Stage number has no units
+                    ax.set_ylabel(f'{key.capitalize()} ({unit})')
+                else:
+                    ax.set_ylabel(f'{key.capitalize()}')
         
-#         plt.ion()
-#         plt.show()
+        plt.ion()
+        plt.show()
 
 
 class SimulationPlayer():
@@ -886,7 +891,14 @@ class SimulationPlayer():
 
         self.original_rocket = rocket
 
+        self.actual_time = 0
         self.time_step = 0
+
+        self.time_multiplier = 1
+        self.time_multiplier_increment = 0.25
+
+        self.rocket_zoom = 0.9
+        self.rocket_zoom_increment = 0.1
 
         self.current_stage = 0
 
@@ -896,21 +908,27 @@ class SimulationPlayer():
         self.slider_button_pos = [0, 0]
         self.slider_button_radius = 10
         self.slider_button_pressed = False
-        self.slider_dimensions = [(200, 610), (1300, 610)]
+        self.slider_dimensions = [(20, 610), (1480, 610)]
 
         self.bg_colour = (36, 36, 36)
         self.part_colour = (255, 255, 255)
 
+        settings_window = SimulationSettings(self.original_rocket)
+        self.settings = settings_window.settings
+
+        self.simulator = None
+
         self.create_window()
     
     def create_window(self):
-        self.get_flight_data()
+        if self.simulator is None:
+            self.get_flight_data()
 
         self.window_dimensions = (1500, 700)
         self.monitor_dimensions = (1920, 1080)
-        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (3*self.monitor_dimensions[0]/4-self.window_dimensions[0]/2, self.monitor_dimensions[1]/2-self.window_dimensions[1]/2)
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (self.monitor_dimensions[0]/2-self.window_dimensions[0]/2, self.monitor_dimensions[1]/2-self.window_dimensions[1]/2)
 
-        self.rocket_container = (0, 0, self.window_dimensions[0], 550)
+        self.rocket_container = (0, 0, self.window_dimensions[0], 570)
 
         pygame.init()
 
@@ -921,27 +939,62 @@ class SimulationPlayer():
 
         self.ui_manager = pygame_gui.UIManager(self.window_dimensions, 'data/themes/simulation_theme.json')
 
-        label_object_id = pygame_gui.core.ObjectID(class_id='@text_entry_labels')
+        reverse_button_object_id = pygame_gui.core.ObjectID(class_id='@reverse_buttons')
         play_button_object_id = pygame_gui.core.ObjectID(class_id='@play_buttons')
+        forward_button_object_id = pygame_gui.core.ObjectID(class_id='@forward_buttons')
+        zoom_in_button_object_id = pygame_gui.core.ObjectID(class_id='@zoom_in_buttons')
+        zoom_out_button_object_id = pygame_gui.core.ObjectID(class_id='@zoom_out_buttons')
 
-        self.stage_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(200, 30, 100, 30), text='Stage: 0', manager=self.ui_manager)
+        info_label_object_id = pygame_gui.core.ObjectID(class_id='@info_labels')
+        right_info_label_object_id = pygame_gui.core.ObjectID(class_id='@right_info_labels')
 
+        self.info_labels = {
+            'stage': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(200, 30, 300, 30), text='Stage: 0', manager=self.ui_manager, object_id=info_label_object_id),
+            'altitude': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(200, 60, 300, 30), text='Altitude: 0 m', manager=self.ui_manager, object_id=info_label_object_id),
+            'velocity': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(200, 90, 300, 30), text='Velocity: 0 m/s', manager=self.ui_manager, object_id=info_label_object_id),
+            'acceleration': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(200, 120, 300, 30), text='Acceleration: 0 m/s^2', manager=self.ui_manager, object_id=info_label_object_id),
+            'simulation speed': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(1000, 30, 300, 30), text='Playback Speed: 1 x', manager=self.ui_manager, object_id=right_info_label_object_id),
+            'zoom': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(1000, 60, 300, 30), text='Zoom: 0.9 x', manager=self.ui_manager, object_id=right_info_label_object_id)
+        }
+
+        self.reverse_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(650, 630, 60, 60), text='', manager=self.ui_manager, object_id=reverse_button_object_id)
         self.play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(720, 630, 60, 60), text='', manager=self.ui_manager, object_id=play_button_object_id)
+        self.forward_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(790, 630, 60, 60), text='', manager=self.ui_manager, object_id=forward_button_object_id)
+
+        self.zoom_in_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1000, 630, 60, 60), text='', manager=self.ui_manager, object_id=zoom_in_button_object_id)
+        self.zoom_out_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1070, 630, 60, 60), text='', manager=self.ui_manager, object_id=zoom_out_button_object_id)
+
+        self.settings_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(10, 630, 180, 60), text='Settings', manager=self.ui_manager)
+
+        self.show_graphs_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1310, 630, 180, 60), text='Graphs', manager=self.ui_manager)
 
         self.clock = pygame.time.Clock()
 
         while self.alive:
             self.time_delta = self.clock.tick(60)/1000
 
-            if not self.paused and not self.slider_button_pressed:
-                self.time_step += 1
-            
+            # Time slider logic
             mouse_pos = pygame.mouse.get_pos()
             if self.slider_dimensions[0][0] <= mouse_pos[0] <= self.slider_dimensions[1][0] and self.slider_button_pressed:
                 self.time_step = int(((mouse_pos[0] - self.slider_dimensions[0][0]) / (self.slider_dimensions[1][0] - self.slider_dimensions[0][0])) * self.length_of_data)
             elif self.slider_button_pressed and mouse_pos[0] > self.slider_dimensions[1][0]:
                 self.time_step = self.length_of_data - 1
             elif self.slider_button_pressed and mouse_pos[0] < self.slider_dimensions[0][0]:
+                self.time_step = 0
+            if self.slider_button_pressed:
+                self.actual_time = self.time_step * self.simulator.settings['time increment']
+
+            # Time incrementing
+            if not self.paused and not self.slider_button_pressed:
+                self.actual_time = self.actual_time + self.time_delta * self.time_multiplier * 0.78  # Constant is needed otherwise the simulation runs too fast
+
+                time_per_step = self.simulator.flight_data['time'][-1] / self.length_of_data
+                self.time_step = round(self.actual_time / time_per_step)
+
+            # Time bounds
+            if self.time_step >= self.length_of_data:
+                self.time_step = self.length_of_data - 1
+            elif self.time_step < 0:
                 self.time_step = 0
 
             self.update_rocket_state()
@@ -972,8 +1025,24 @@ class SimulationPlayer():
                     self.slider_button_pressed = False
 
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == self.forward_button:
+                    self.time_multiplier += self.time_multiplier_increment
+                if event.ui_element == self.reverse_button:
+                    self.time_multiplier -= self.time_multiplier_increment
                 if event.ui_element == self.play_button:
                     self.paused = not self.paused
+                if event.ui_element == self.zoom_in_button:
+                    self.rocket_zoom += self.rocket_zoom_increment
+                    if self.rocket_zoom > 1:  # Zoom upper bound
+                        self.rocket_zoom = 1
+                if event.ui_element == self.zoom_out_button:
+                    self.rocket_zoom -= self.rocket_zoom_increment
+                    if self.rocket_zoom <= 0.001:  # Zoom lower bound
+                        self.rocket_zoom = 0.1
+                if event.ui_element == self.show_graphs_button:
+                    self.show_graphs()
+                if event.ui_element == self.settings_button:
+                    self.open_settings()
             
             self.ui_manager.process_events(event)
     
@@ -984,7 +1053,7 @@ class SimulationPlayer():
     def render(self):
         self.root.fill(self.bg_colour)
 
-        rocket_renderer.render_rocket_simulation(current_rocket=self.simulator.rocket_at_stage[self.current_stage], flight_data=self.simulator.flight_data, time_step=self.time_step, root=self.root, angle=self.rocket_angle, container=self.rocket_container)
+        rocket_renderer.render_rocket_simulation(current_rocket=self.simulator.rocket_at_stage[self.current_stage], flight_data=self.simulator.flight_data, time_step=self.time_step, root=self.root, angle=self.rocket_angle, container=self.rocket_container, font=self.font, zoom_multiplier=self.rocket_zoom)
 
         self.ui_manager.draw_ui(self.root)
         self.slider_button_pos = rocket_renderer.draw_slider(self.root, self.slider_dimensions[0], self.slider_dimensions[1], self.time_step/self.length_of_data, button_radius=self.slider_button_radius)
@@ -992,7 +1061,7 @@ class SimulationPlayer():
         pygame.display.update()
 
     def get_flight_data(self):
-        self.simulator = rocket_simulator.Simulator(self.original_rocket)
+        self.simulator = rocket_simulator.Simulator(self.original_rocket, self.settings)
         self.simulator.simulate()
 
         burnout_time = self.simulator.flight_data['time'][-1]
@@ -1019,7 +1088,32 @@ class SimulationPlayer():
     
     def update_rocket_state(self):
         self.current_stage = self.simulator.flight_data['stage'][self.time_step]
-        self.stage_label.set_text(f'Stage: {self.current_stage}')
+        
+        # Update info labels
+        for label_variable in self.info_labels:
+            original_label = self.info_labels[label_variable].text
+
+            unit = ''
+            if label_variable not in ['stage']:  # If key is in this list, units will not be kept
+                unit = original_label.split(' ')[-1]
+
+            significant_figures = 2
+
+            new_value = 0
+            if label_variable == 'stage':
+                new_value = self.current_stage
+            elif label_variable == 'altitude':
+                new_value = round(self.simulator.flight_data['altitude'][self.time_step], significant_figures)
+            elif label_variable == 'velocity':
+                new_value = round(self.simulator.flight_data['velocity'][self.time_step], significant_figures)
+            elif label_variable == 'acceleration':
+                new_value = round(self.simulator.flight_data['acceleration'][self.time_step], significant_figures)
+            elif label_variable == 'simulation speed':
+                new_value = self.time_multiplier
+            elif label_variable == 'zoom':
+                new_value = round(self.rocket_zoom, 2)
+
+            self.info_labels[label_variable].set_text(f"{label_variable.capitalize()}: {new_value} {unit}")
 
         self.update_rocket_angle()
 
@@ -1036,6 +1130,136 @@ class SimulationPlayer():
             else:
                 self.rocket_angle = (-math.pi) - ((self.time_step - apoapsis_time_step)/apoapsis_curve_steps) * math.pi/2
 
+    def show_graphs(self):
+        self.close()
+
+        SimulationData(self.original_rocket, self.simulator)
+
+        # When SimulationData finished running (ie is closed), this function will continue and the simulation player will be started again
+        self.alive = True
+        self.create_window()
+
+    def open_settings(self):
+        self.close()
+
+        SimulationPlayer(self.original_rocket)
+
+
+class SimulationSettings:
+    def __init__(self, rocket):
+        self.alive = True
+
+        self.bg_colour = (36, 36, 36)
+
+        self.rocket = rocket
+
+        self.default_settings = {
+            'gravity acc': 9.81,
+            'air density': 1.225,
+            'time increment': 0.01,
+            'altitude cutoff': -10,
+            'time cutoff': 1000
+        }
+
+        self.settings = copy.copy(self.default_settings)
+
+        self.settings_units = {
+            'gravity acc': 'm/s^2',
+            'air density': 'kg/m^3',
+            'time increment': 's',
+            'altitude cutoff': 'm',
+            'time cutoff': 's'
+        }
+
+        self.create_window()
+    
+    def create_window(self):
+        self.window_dimensions = (700, 700)
+        self.monitor_dimensions = (1920, 1080)
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (self.monitor_dimensions[0]/2-self.window_dimensions[0]/2, self.monitor_dimensions[1]/2-self.window_dimensions[1]/2)
+
+        self.rocket_container = (100, 0, self.window_dimensions[0]-200, 550)
+
+        pygame.init()
+
+        self.root = pygame.display.set_mode(self.window_dimensions)
+        pygame.display.set_caption('Simulation Settings')
+
+        self.ui_manager = pygame_gui.UIManager(self.window_dimensions, 'data/themes/simulation_theme.json')
+
+        entry_label_object_id = pygame_gui.core.ObjectID(class_id='@text_entry_labels')
+        title_object_id = pygame_gui.core.ObjectID(class_id='@settings_title_labels')
+
+        self.title_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, self.window_dimensions[0], 80), text='Simulation Settings', object_id=title_object_id, manager=self.ui_manager)
+
+        self.reset_settings_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(50, 630, 200, 60), text='Reset to defaults', manager=self.ui_manager)
+        self.apply_settings_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(450, 630, 200, 60), text='Apply settings', manager=self.ui_manager)
+
+        self.settings_elements = {}
+
+        for i, (setting, value) in enumerate(self.settings.items()):
+            self.settings_elements.update({f'{setting} label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(100, i*40+100, 150, 30), text=f'{setting.capitalize()} ({self.settings_units[setting]}):', object_id=entry_label_object_id, manager=self.ui_manager)})
+            self.settings_elements.update({f'{setting} entry': pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect(250, i*40+92, 350, 46), manager=self.ui_manager, initial_text=str(value))})
+            self.settings_elements[f'{setting} entry'].allowed_characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '-']
+
+        self.clock = pygame.time.Clock()
+
+        while self.alive:
+            self.time_delta = self.clock.tick(60)/1000
+
+            self.render()
+
+            self.handle_events()
+    
+    def close(self):
+        self.alive = False
+        pygame.quit()
+    
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.close()
+                return None
+            
+            if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == self.reset_settings_button:
+                    self.reset_settings()
+                elif event.ui_element == self.apply_settings_button:
+                    self.apply_settings()
+                    return None
+            
+            if event.type == pygame_gui.UI_TEXT_ENTRY_CHANGED:
+                for element_name, element_object in self.settings_elements.items():
+                    if event.ui_element == element_object:
+                        setting = ' '.join(element_name.split()[:-1])  # Exclude 'label' or 'entry'
+                        try:
+                            self.settings[setting] = float(element_object.get_text())
+                        except Exception:
+                            pass
+            
+            self.ui_manager.process_events(event)
+        
+        self.ui_manager.update(self.time_delta)
+    
+    def render(self):
+        self.root.fill(self.bg_colour)
+
+        self.ui_manager.draw_ui(self.root)
+
+        pygame.display.update()
+
+    def reset_settings(self):
+        self.settings = copy.copy(self.default_settings)
+        self.update_settings_entries()
+    
+    def update_settings_entries(self):
+        for element_name, element_object in self.settings_elements.items():
+            if element_name.split()[-1] == 'entry':
+                setting = ' '.join(element_name.split()[:-1])
+                element_object.set_text(str(self.settings[setting]))
+    
+    def apply_settings(self):
+        self.close()
 
 if __name__ == "__main__":
     MainMenu()
