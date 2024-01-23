@@ -32,7 +32,7 @@ def execute_sql(conn, sql):
 def init_db():
     conn = connect(DATABASE)
 
-    sql = "CREATE TABLE IF NOT EXISTS Rocket (rocket_id INTEGER PRIMARY KEY, name TEXT);"
+    sql = "CREATE TABLE IF NOT EXISTS Rocket (rocket_id INTEGER PRIMARY KEY, name TEXT, new_part_id INTEGER);"
     execute_sql(conn, sql)
 
     sql = """CREATE TABLE IF NOT EXISTS Stages (
@@ -102,7 +102,7 @@ def save_rocket(rocket):
     if len(existing_rockets) > 0:
         delete_rocket(Rocket(name=rocket.name))
 
-    sql = f"INSERT INTO Rocket (rocket_id, name) VALUES((SELECT MAX(rocket_id) FROM Rocket) + 1, '{rocket.name}')"
+    sql = f"INSERT INTO Rocket (rocket_id, name, new_part_id) VALUES((SELECT MAX(rocket_id) FROM Rocket) + 1, '{rocket.name}', {rocket.new_part_id})"
     execute_sql(conn, sql)
 
     for stage_number, stage in enumerate(rocket.stages):
@@ -155,7 +155,10 @@ def get_rocket(name):
 
     # ROCKET
 
-    rocket = Rocket(name=name)
+    sql = f"SELECT new_part_id FROM Rocket WHERE name = '{name}'"
+    new_part_id = execute_sql(conn, sql)
+
+    rocket = Rocket(name=name, new_part_id=new_part_id)
 
     # PARTS
 
@@ -206,7 +209,7 @@ def get_rocket(name):
     stages_data = [list(stage) for stage in stages_data]
     max_stage = max([stage[0] for stage in stages_data])
     rocket.stages = [[] for _ in range(max_stage+1)]
-    for stage in stages_data:  # DOESNT WORK, IDS GET ADDED TO EVERY STAGE FOR SOME REASON
+    for stage in stages_data:
         stage_num = stage[0]
         part_id = stage[1]
         rocket.stages[stage_num].append(part_id)
@@ -228,3 +231,5 @@ def get_all_saved_rockets():
         rockets.append(get_rocket(name[0]))
     
     return rockets
+
+reset_db()

@@ -13,38 +13,6 @@ import rocket_simulator
 from rocket_parts import *
 
 
-class Queue():
-    pass
-
-
-class Stack():
-    def __init__(self, size):
-        self.stack = []
-
-        self.max_size = size
-    
-    def is_empty(self):
-        if len(self.stack) == 0:
-            return True
-        else:
-            return False
-    
-    def push(self, x):
-        if len(self.stack) == self.max_size:
-            self.stack.pop(0)  # NOT ALLOWED IN A STACK, USE A QUEUE
-
-        self.stack.append(x)
-
-    def pop(self):
-        return self.stack.pop()
-    
-    def peek(self):
-        if self.is_empty:
-            return None
-        else:
-            return self.stack[-1]
-
-
 class MainMenu():
     def __init__(self):
         self.alive = True
@@ -90,7 +58,7 @@ class MainMenu():
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.close()
+                exit()
             
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == self.create_rocket_button:
@@ -175,8 +143,9 @@ class RocketLoader():
 
         self.title_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(self.window_dimensions[0]/2-title_width/2, 10, title_width, 80), text='Load Rocket:', object_id=title_object_id, manager=self.ui_manager)
 
-        self.load_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(50, (self.rocket_list_container[1] + self.rocket_list_container[3] + self.window_dimensions[1])/2-37.5, 200, 75), text='Load', manager=self.ui_manager)
-        self.delete_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(450, (self.rocket_list_container[1] + self.rocket_list_container[3] + self.window_dimensions[1])/2-37.5, 200, 75), text='Delete', manager=self.ui_manager)
+        self.main_menu_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(50, 615, 195, 75), text='Main Menu', manager=self.ui_manager)
+        self.load_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(255, 615, 195, 75), text='Load', manager=self.ui_manager)
+        self.delete_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(460, 615, 195, 75), text='Delete', manager=self.ui_manager)
         self.load_button.disable()
         self.delete_button.disable()
 
@@ -192,13 +161,16 @@ class RocketLoader():
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.back_to_last_window()
+                exit()
 
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == self.load_button:
                     self.load_selected_rocket()
                 elif event.ui_element == self.delete_button:
                     self.delete_selected_rocket()
+                elif event.ui_element == self.main_menu_button:
+                    self.close()
+                    MainMenu()
 
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1 or event.button == 3:
@@ -265,17 +237,7 @@ class RocketLoader():
     def close(self):
         self.alive = False
         pygame.quit()
-    
-    def back_to_last_window(self):
-        self.close()
 
-        if self.last_window == 'main menu':
-            MainMenu()
-        elif self.last_window == 'editor':
-            Editor()
-        else:
-            raise Exception('Invalid last window')
-    
     def delete_selected_rocket(self):
         if self.selected_index != None:
             db_controller.delete_rocket(self.rockets[self.selected_index])
@@ -309,8 +271,11 @@ class Editor():
         self.normal_line_width = 2
         self.selected_line_width = 5
 
+        self.max_stages = 50
+
         self.length_unit = 'm'
         self.mass_unit = 'kg'
+        self.density_unit = 'kg/m^3'
         self.force_unit = 'N'
         self.time_unit = 's'
 
@@ -368,8 +333,7 @@ class Editor():
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.close()
-                return None
+                exit()
                 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: # Left click
@@ -484,6 +448,13 @@ class Editor():
                             SimulationPlayer(self.rocket)
                     except AttributeError:
                         pass
+
+                    try:
+                        if event.ui_element == self.info_panel_elements['main menu button']:
+                            self.close()
+                            MainMenu()
+                    except AttributeError:
+                        pass
                 
             if event.type == pygame_gui.UI_TEXT_ENTRY_CHANGED:
                 if event.ui_element == self.rocket_name_entry:
@@ -511,19 +482,22 @@ class Editor():
                         part = self.get_selected_part()
                         entered_stage = int(self.part_editor_elements['stage entry'].get_text())
 
-                        # Add part to stages
-                        if entered_stage < len(self.rocket.stages):
-                            len_before_delete = len(self.rocket.stages)
-                            self.delete_part_from_stages(part)
-                            if len_before_delete == len(self.rocket.stages): # Check whether a stage number has been deleted
-                                self.rocket.stages[entered_stage].append(part.local_part_id)
-                            else:
-                                self.rocket.stages[entered_stage-1].append(part.local_part_id)
-                            
-                        elif entered_stage >= len(self.rocket.stages):
-                            self.delete_part_from_stages(part)
+                        self.delete_part_from_stages(part)
+
+                        if entered_stage > self.max_stages:
+                            entered_stage = self.max_stages
+
+                        if len(self.rocket.stages) - 1 < entered_stage <= self.max_stages:  # Stage higher than current max, but lower than limit
+                            for i in range(entered_stage - len(self.rocket.stages)):
+                                self.rocket.stages.append([])
                             self.rocket.stages.append([part.local_part_id])
-                            self.self.part_editor_elements['stage entry'].set_text(str(len(self.rocket.stages)))
+                        
+                        elif 0 <= entered_stage < len(self.rocket.stages):  # Stage in current list of stages
+                            self.rocket.stages[entered_stage].append(part.local_part_id)
+                        
+                        else:  # Catch any erroneous values
+                            self.rocket.stages[0].append(part.local_part_id)
+
                 except Exception:
                     pass
 
@@ -602,14 +576,10 @@ class Editor():
         for stage in self.rocket.stages:
             if part.local_part_id in stage:
                 stage.remove(part.local_part_id)
-                if len(stage) == 0:
-                    self.rocket.stages.remove(stage)
     
     def get_last_part_index_without_child(self, parent_whitelist, child_blacklist):  # Returns the index of the last part that is in the whitelist and does not have a child in the child whitelist
         reversed_parts = copy.deepcopy(self.rocket.parts)
         reversed_parts.reverse()
-
-        saftey_part_index = 0  # In case all parts have a child
 
         index = -1
         for part in reversed_parts:
@@ -617,16 +587,13 @@ class Editor():
                 children = get_children(part, self.rocket)
                 for child in children:
                     if type(child) in child_blacklist:
-                        saftey_part_index = index
                         break
                 else:
                     return index
 
             index -= 1
         
-
-
-        return saftey_part_index
+        return None  # No free parts
 
     def update_all_parts(self):
         for part in self.rocket.parts:
@@ -643,18 +610,45 @@ class Editor():
         RocketLoader('editor', 'editor')
 
     def add_part(self, Part):
+        last_body_part_index = self.get_last_part_index_without_child([BodyTube, NoseCone], [])  # With no child blacklist, this will return the last Body Tube or Nose Cone
+
+        # Determine rough length of new part
+        if last_body_part_index is not None:
+            assumed_length = self.rocket.parts[last_body_part_index].length
+        else:
+            assumed_length = 1  # Default if there are no parts
+
+        # Determine rough diameter of new part
+        if last_body_part_index is not None:
+            assumed_diameter = self.rocket.parts[last_body_part_index].diameter
+        else:
+            assumed_diameter = 0.3  # Default if there are no parts
+
         if Part is BodyTube:
-            self.rocket.parts.append(Part(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
+            self.rocket.parts.append(Part(colour=self.part_colour, local_part_id=self.rocket.new_part_id, length=assumed_length, diameter=assumed_diameter))
+
         elif Part is NoseCone:
-            self.rocket.parts.insert(0, Part(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
+            self.rocket.parts.insert(0, Part(colour=self.part_colour, local_part_id=self.rocket.new_part_id, length=assumed_length * 0.3, diameter=assumed_diameter))
+
         elif Part is Decoupler:
-            self.rocket.parts.append(Part(colour=self.part_colour, local_part_id=self.rocket.new_part_id))
+            self.rocket.parts.append(Part(colour=self.part_colour, local_part_id=self.rocket.new_part_id, length=assumed_length * 0.1, diameter=assumed_diameter))
             self.rocket.stages.append([self.rocket.new_part_id])
+
         elif Part is Engine:
-            self.rocket.parts.append(Engine(self.rocket.parts[self.get_last_part_index_without_child([BodyTube, NoseCone], [Engine])].local_part_id, local_part_id=self.rocket.new_part_id))
-            self.rocket.stages.append([self.rocket.new_part_id])
+            if self.get_last_part_index_without_child([BodyTube, NoseCone], [Engine]):  # Only add if there is a suitable parent part
+                self.rocket.parts.append(Engine(self.rocket.parts[self.get_last_part_index_without_child([BodyTube, NoseCone], [Engine])].local_part_id, 
+                                                local_part_id=self.rocket.new_part_id, length=assumed_length * 0.8, diameter=assumed_diameter * 0.7))
+                
+                # Check if adding a stage will go over the stage limit
+                if self.rocket.stages == self.max_stages:
+                    self.rocket.stages[-1].append(self.rocket.new_part_id)
+                else:
+                    self.rocket.stages.append([self.rocket.new_part_id])
+
         elif Part is Fins:
-            self.rocket.parts.append(Fins(self.rocket.parts[self.get_last_part_index_without_child([BodyTube, NoseCone], [Fins])].local_part_id, local_part_id=self.rocket.new_part_id))
+            if self.get_last_part_index_without_child([BodyTube, NoseCone], [Fins]):  # Only add if there is a suitable parent part
+                self.rocket.parts.append(Fins(self.rocket.parts[self.get_last_part_index_without_child([BodyTube, NoseCone], [Fins])].local_part_id, 
+                                              local_part_id=self.rocket.new_part_id, length=assumed_length * 0.3))
         
         self.rocket.new_part_id += 1
 
@@ -664,7 +658,8 @@ class Editor():
             'wet mass label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 60, self.left_panel_ui_container[2], 50), text='', manager=self.ui_manager),
             'dry mass label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 90, self.left_panel_ui_container[2], 50), text='', manager=self.ui_manager),
             'thrust to weight ratio label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 120, self.left_panel_ui_container[2], 50), text='', manager=self.ui_manager),
-            'simulate button': pygame_gui.elements.UIButton(relative_rect=pygame.Rect(10, 640, self.left_panel_ui_container[2]-20, 50), text='Simulate', manager=self.ui_manager),
+            'simulate button': pygame_gui.elements.UIButton(relative_rect=pygame.Rect(10, 640, 135, 50), text='Simulate', manager=self.ui_manager),
+            'main menu button': pygame_gui.elements.UIButton(relative_rect=pygame.Rect(155, 640, 135, 50), text='Main Menu', manager=self.ui_manager)
         }
 
     def close_info_panel(self):
@@ -697,7 +692,7 @@ class Editor():
 
         self.part_editor_elements = {}
 
-        self.part_editor_elements.update({'delete part button': pygame_gui.elements.UIButton(relative_rect=pygame.Rect(150, 640, 140, 50), text='Delete', manager=self.ui_manager)})
+        self.part_editor_elements.update({'delete part button': pygame_gui.elements.UIButton(relative_rect=pygame.Rect(10, 640, 280, 50), text='Delete', manager=self.ui_manager)})
 
         if isinstance(part, BodyTube):
             self.part_editor_elements.update({'body tube label': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(0, 10, 300, 50), text=f'Edit Body Tube', manager=self.ui_manager)})
@@ -706,7 +701,7 @@ class Editor():
             self.add_entry_line('diameter', part.diameter, self.length_unit, float_whitelist, 120)
             self.add_entry_line('wall thickness', part.wall_thickness, self.length_unit, float_whitelist, 180)
 
-            self.add_entry_line('density', part.density, self.mass_unit, float_whitelist, 520)
+            self.add_entry_line('density', part.density, self.density_unit, float_whitelist, 520)
             self.add_entry_line('mass', part.mass, self.mass_unit, float_whitelist, 580)
 
         elif isinstance(part, NoseCone):
@@ -715,7 +710,7 @@ class Editor():
             self.add_entry_line('length', part.length, self.length_unit, float_whitelist, 60)
             self.add_entry_line('diameter', part.diameter, self.length_unit, float_whitelist, 120)
 
-            self.add_entry_line('density', part.density, self.mass_unit, float_whitelist, 520)
+            self.add_entry_line('density', part.density, self.density_unit, float_whitelist, 520)
             self.add_entry_line('mass', part.mass, self.mass_unit, float_whitelist, 580)
         
         elif isinstance(part, Decoupler):
@@ -756,11 +751,11 @@ class Editor():
         label_height = 50
 
         entry_start_x = 130
-        entry_width = 140
+        entry_width = 110
         entry_height = 50
 
-        unit_start_x = 270
-        unit_width = 50
+        unit_start_x = 240
+        unit_width = 60
         unit_height = 50
 
         length_limit = 10
@@ -976,14 +971,16 @@ class SimulationPlayer():
             'zoom': pygame_gui.elements.UILabel(relative_rect=pygame.Rect(1000, 60, 300, 30), text='Zoom: 0.9 x', manager=self.ui_manager, object_id=right_info_label_object_id)
         }
 
+        self.main_menu_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(10, 630, 180, 60), text='Main Menu', manager=self.ui_manager)
+        self.settings_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(200, 630, 180, 60), text='Settings', manager=self.ui_manager)
+        self.editor_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(390, 630, 180, 60), text='Edit Rocket', manager=self.ui_manager)
+
         self.reverse_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(650, 630, 60, 60), text='', manager=self.ui_manager, object_id=reverse_button_object_id)
         self.play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(720, 630, 60, 60), text='', manager=self.ui_manager, object_id=play_button_object_id)
         self.forward_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(790, 630, 60, 60), text='', manager=self.ui_manager, object_id=forward_button_object_id)
 
-        self.zoom_in_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1000, 630, 60, 60), text='', manager=self.ui_manager, object_id=zoom_in_button_object_id)
-        self.zoom_out_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1070, 630, 60, 60), text='', manager=self.ui_manager, object_id=zoom_out_button_object_id)
-
-        self.settings_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(10, 630, 180, 60), text='Settings', manager=self.ui_manager)
+        self.zoom_in_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(930, 630, 60, 60), text='', manager=self.ui_manager, object_id=zoom_in_button_object_id)
+        self.zoom_out_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1000, 630, 60, 60), text='', manager=self.ui_manager, object_id=zoom_out_button_object_id)
 
         self.show_graphs_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1310, 630, 180, 60), text='Graphs', manager=self.ui_manager)
 
@@ -1029,8 +1026,7 @@ class SimulationPlayer():
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.close()
-                return None
+                exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: # Left click
@@ -1060,8 +1056,15 @@ class SimulationPlayer():
                         self.rocket_zoom = 0.1
                 if event.ui_element == self.show_graphs_button:
                     self.show_graphs()
+                if event.ui_element == self.main_menu_button:
+                    self.close()
+                    MainMenu()
                 if event.ui_element == self.settings_button:
                     self.open_settings()
+                if event.ui_element == self.editor_button:
+                    self.close()
+                    Editor(self.original_rocket)
+                
             
             self.ui_manager.process_events(event)
     
@@ -1244,8 +1247,7 @@ class SimulationSettings:
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.close()
-                return None
+                exit()
             
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == self.reset_settings_button:

@@ -58,10 +58,10 @@ class RocketPart():
         return None
 
 class Rocket():
-    def __init__(self, name='New Rocket', parts=[]):
+    def __init__(self, name='New Rocket', parts=[], new_part_id=0):
         self.name = name
         self.parts = parts
-        self.new_part_id = 0
+        self.new_part_id = new_part_id
 
         self.stages = [] # List of lists of part ids
     
@@ -301,7 +301,7 @@ class Engine(RocketPart):
 
 
 class Fins(RocketPart):
-    def __init__(self, parent_id=None, fin_shape='triangle', fin_count=4, length=0.2, thickness=0.05, width=0.1, offset=0, mass=1, colour=(255, 255, 255), local_part_id=None):
+    def __init__(self, parent_id=None, fin_shape='triangle', fin_count=4, length=0.2, thickness=0.05, width=0.1, offset=0, mass=0.05, colour=(255, 255, 255), local_part_id=None):
         super().__init__(colour, local_part_id)
 
         self.fin_shape = fin_shape

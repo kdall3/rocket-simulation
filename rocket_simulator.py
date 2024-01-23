@@ -12,9 +12,6 @@ def get_drag_coefficient(part):
     elif isinstance(part, Fins):
         return 0.075
 
-def get_drag_force(drag_coefficient, air_density, velocity, area):
-    return 0.5 * drag_coefficient * air_density * velocity**2 * area
-
 class Simulator():
     def __init__(self, rocket, settings):
         self.rocket = copy.deepcopy(rocket)
@@ -27,8 +24,10 @@ class Simulator():
 
         self.drag_coefficient_area_total = 0 # Total of all drag coefficients multiplied by their respective areas
 
+        self.rocket_at_stage = []
+
         for part in self.rocket.parts:
-            if isinstance(part, Engine) and part.local_part_id in rocket.stages[0]:
+            if isinstance(part, Engine):
                 self.engine = part
             elif isinstance(part, NoseCone) and self.nose is None:
                 self.nose = part
@@ -45,20 +44,27 @@ class Simulator():
         self.velocity = 0
         self.acceleration = 0
         self.g_force = 0
-        self.thrust = self.engine.average_thrust
         self.drag = 0
         self.fuel = 1
         self.mass = 0
 
+        if self.engine == None:  # No engine found
+            self.engine = Engine(mass=0, propellant_mass=0, average_thrust=0, burn_time=0)
+            self.fuel = 0
+        
+        self.thrust = self.engine.average_thrust
+
         self.current_stage = 0
+        while len(self.rocket.stages[self.current_stage]) == 0:  # Increment stage until a non-empty stage is found
+            self.rocket_at_stage.append(copy.deepcopy(self.rocket))
+            self.current_stage += 1
+
         self.max_stage = len(rocket.stages) - 1
 
         self.parts_to_part_ids = {}
         for part in self.rocket.parts:
             self.mass += part.mass
             self.parts_to_part_ids.update({part.local_part_id:part})
-
-        self.rocket_at_stage = []
 
         self.flight_data = {
             'time': [],
@@ -94,6 +100,8 @@ class Simulator():
                 break
 
             self.time += self.settings['time increment']
+        
+        
     
     def end_simulation(self):
         apoapsis_altitude = max(self.flight_data['altitude'])
@@ -106,7 +114,11 @@ class Simulator():
     def stage(self):
         if self.current_stage != self.max_stage:
             self.current_stage += 1
-            for part_id in self.rocket.stages[self.current_stage]:
+            while len(self.rocket.stages[self.current_stage]) == 0:  # Increment stage until a non-empty stage is found
+                self.rocket_at_stage.append(copy.deepcopy(self.rocket))
+                self.current_stage += 1
+            
+            for part_id in self.rocket.stages[self.current_stage]:  # Check for decouplers first, then engines
                 part_in_stage = self.parts_to_part_ids[part_id]
                 if isinstance(part_in_stage, Decoupler):
                     reached_decoupler = False
@@ -114,8 +126,8 @@ class Simulator():
                         if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
                             if part.local_part_id == part_in_stage.local_part_id:
                                 reached_decoupler = True
-                            if reached_decoupler:  # Delete part and children
-                                children = get_children(part, self.rocket)
+                            if reached_decoupler:  # Once the decoupler is found, we delete it and everything after it
+                                children = get_children(part, self.rocket)  # Delete part and children
                                 self.rocket.parts.remove(self.rocket.get_part_with_part_id(part.local_part_id))
 
                                 for child in children:
@@ -124,7 +136,9 @@ class Simulator():
                     self.mass = 0
                     for part in self.rocket.parts:
                         self.mass += part.mass
-                elif isinstance(part_in_stage, Engine):
+            
+            for part_id in self.rocket.stages[self.current_stage]:
+                if isinstance(part_in_stage, Engine):
                     self.engine = part_in_stage
                     self.fuel = 1
                     self.thrust = self.engine.average_thrust
@@ -134,7 +148,11 @@ class Simulator():
     def step(self):
         self.thrust = 0
         if self.engine is not None:
-            fuel_decrease = self.settings['time increment'] / self.engine.burn_time
+            if self.engine.burn_time != 0:
+                fuel_decrease = self.settings['time increment'] / self.engine.burn_time
+            else:
+                fuel_decrease = 10000000000000  # Large number to represent dividing by zero
+
             if self.fuel < fuel_decrease and self.fuel > 0:  # Engine burning partway during the time step
                 self.thrust = self.engine.average_thrust * self.fuel/fuel_decrease
                 self.fuel = 0
