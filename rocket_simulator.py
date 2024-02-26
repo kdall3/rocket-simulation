@@ -2,6 +2,8 @@ from rocket_parts import *
 import math
 import copy
 
+LARGE_NUMBER = 10000000000000  # Used to represent dividing by zero, so the program does not crash
+
 def get_drag_coefficient(part):
     if isinstance(part, BodyTube):
         angle = 90
@@ -54,12 +56,16 @@ class Simulator():
         
         self.thrust = self.engine.average_thrust
 
-        self.current_stage = 0
-        while len(self.rocket.stages[self.current_stage]) == 0:  # Increment stage until a non-empty stage is found
-            self.rocket_at_stage.append(copy.deepcopy(self.rocket))
-            self.current_stage += 1
+        if len(self.rocket.stages) != 0:
+            self.current_stage = 0
+            while len(self.rocket.stages[self.current_stage]) == 0 and self.current_stage < len(self.rocket.stages):  # Increment stage until a non-empty stage is found
+                self.rocket_at_stage.append(copy.deepcopy(self.rocket))
+                self.current_stage += 1
 
-        self.max_stage = len(rocket.stages) - 1
+            self.max_stage = len(rocket.stages) - 1
+        else:
+            self.rocket_at_stage.append(copy.deepcopy(self.rocket))
+            self.max_stage = 0
 
         self.parts_to_part_ids = {}
         for part in self.rocket.parts:
@@ -127,7 +133,8 @@ class Simulator():
                             if part.local_part_id == part_in_stage.local_part_id:
                                 reached_decoupler = True
                             if reached_decoupler:  # Once the decoupler is found, we delete it and everything after it
-                                children = get_children(part, self.rocket)  # Delete part and children
+                                # Delete part and children
+                                children = get_children(part, self.rocket)
                                 self.rocket.parts.remove(self.rocket.get_part_with_part_id(part.local_part_id))
 
                                 for child in children:
@@ -151,7 +158,7 @@ class Simulator():
             if self.engine.burn_time != 0:
                 fuel_decrease = self.settings['time increment'] / self.engine.burn_time
             else:
-                fuel_decrease = 10000000000000  # Large number to represent dividing by zero
+                fuel_decrease = LARGE_NUMBER  # Large number to represent dividing by zero
 
             if self.fuel < fuel_decrease and self.fuel > 0:  # Engine burning partway during the time step
                 self.thrust = self.engine.average_thrust * self.fuel/fuel_decrease
@@ -176,7 +183,11 @@ class Simulator():
         else:
             self.drag = 0.5 * self.settings['air density'] * self.velocity**2 * self.drag_coefficient_area_total
 
-        self.acceleration = (self.thrust + self.drag) / self.mass - self.settings['gravity acc']
+        if self.mass != 0:
+            self.acceleration = (self.thrust + self.drag) / self.mass - self.settings['gravity acc']
+        else:
+            self.acceleration = LARGE_NUMBER
+
         self.velocity += self.acceleration * self.settings['time increment']
         self.altitude += self.velocity * self.settings['time increment']
 

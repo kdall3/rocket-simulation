@@ -1,0 +1,149 @@
+ERROR:root: (02/02/2024 09:50:40)
+Traceback (most recent call last):
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 1300, in <module>
+    MainMenu()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 25, in __init__
+    self.create_window()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 57, in create_window
+    self.handle_events()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 68, in handle_events
+    self.create_rocket()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 94, in create_rocket
+    Editor()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 285, in __init__
+    self.create_window()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 330, in create_window
+    self.handle_events()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 509, in handle_events
+    self.ui_manager.update(self.time_delta)
+  File "C:\Users\100188500\AppData\Roaming\Python\Python39\site-packages\pygame_gui\ui_manager.py", line 265, in update
+    self._update_mouse_position()
+  File "C:\Users\100188500\AppData\Roaming\Python\Python39\site-packages\pygame_gui\ui_manager.py", line 564, in _update_mouse_position
+    self.mouse_position = self.calculate_scaled_mouse_position(pygame.mouse.get_pos())
+pygame.error: video system not initialized
+ERROR:root: (02/02/2024 09:59:29)
+Traceback (most recent call last):
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 1300, in <module>
+    MainMenu()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 25, in __init__
+    self.create_window()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 57, in create_window
+    self.handle_events()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 68, in handle_events
+    self.create_rocket()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 94, in create_rocket
+    Editor()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 285, in __init__
+    self.create_window()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 330, in create_window
+    self.handle_events()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 509, in handle_events
+    self.ui_manager.update(self.time_delta)
+  File "C:\Users\100188500\AppData\Roaming\Python\Python39\site-packages\pygame_gui\ui_manager.py", line 265, in update
+    self._update_mouse_position()
+  File "C:\Users\100188500\AppData\Roaming\Python\Python39\site-packages\pygame_gui\ui_manager.py", line 564, in _update_mouse_position
+    self.mouse_position = self.calculate_scaled_mouse_position(pygame.mouse.get_pos())
+pygame.error: video system not initialized
+ERROR:root: (26/02/2024 15:11:34)
+Traceback (most recent call last):
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 1351, in <module>
+    MainMenu()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 59, in __init__
+    self.create_window()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 91, in create_window
+    self.handle_events()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 102, in handle_events
+    self.create_rocket()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 128, in create_rocket
+    Editor()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 321, in __init__
+    self.create_window()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 366, in create_window
+    self.handle_events()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 475, in handle_events
+    self.load_design()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 653, in load_design
+    RocketLoader('editor', 'editor')
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 152, in __init__
+    self.create_window()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 194, in create_window
+    self.handle_events()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 205, in handle_events
+    self.load_selected_rocket()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 288, in load_selected_rocket
+    Editor(self.rockets[self.selected_index])
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 321, in __init__
+    self.create_window()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 366, in create_window
+    self.handle_events()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 375, in handle_events
+    exit()
+  File "C:\Program Files\Python39\lib\_sitebuiltins.py", line 26, in __call__
+    raise SystemExit(code)
+SystemExit: None
+ERROR:root: (26/02/2024 15:22:29)
+Traceback (most recent call last):
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 1357, in <module>
+    logging.basicConfig(filename="error_log.log", encoding='utf-8', level=logging.ERROR)
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 59, in __init__
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 91, in create_window
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 104, in handle_events
+    elif event.ui_element == self.create_simulation_button:
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 133, in edit_rocket
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 152, in __init__
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 194, in create_window
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 210, in handle_events
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 59, in __init__
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 91, in create_window
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 102, in handle_events
+    elif event.ui_element == self.edit_rocket_button:
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 128, in create_rocket
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 321, in __init__
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 366, in create_window
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 375, in handle_events
+    if event.type == pygame.QUIT:
+  File "C:\Program Files\Python39\lib\_sitebuiltins.py", line 26, in __call__
+    raise SystemExit(code)
+SystemExit: None
+ERROR:root: (26/02/2024 15:23:58)
+Traceback (most recent call last):
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 1361, in <module>
+    logging.info('Program started')
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 58, in __init__
+    self.create_window()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 90, in create_window
+    self.handle_events()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 101, in handle_events
+    self.create_rocket()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 127, in create_rocket
+    Editor()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 320, in __init__
+    self.create_window()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 367, in create_window
+    self.handle_events()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 376, in handle_events
+    exit()
+  File "C:\Program Files\Python39\lib\_sitebuiltins.py", line 26, in __call__
+    raise SystemExit(code)
+SystemExit: None
+ERROR:root: (26/02/2024 15:24:43)
+Traceback (most recent call last):
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 1364, in <module>
+    MainMenu()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 58, in __init__
+    self.create_window()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 90, in create_window
+    self.handle_events()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 101, in handle_events
+    self.create_rocket()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 127, in create_rocket
+    Editor()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 320, in __init__
+    self.create_window()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 367, in create_window
+    self.handle_events()
+  File "\\BCFCSTUDENTDATA\normalstudenthomes\100188500\Documents\GitHub\rocket-simulation\Rocket Simulation.py", line 376, in handle_events
+    exit()
+  File "C:\Program Files\Python39\lib\_sitebuiltins.py", line 26, in __call__
+    raise SystemExit(code)
+SystemExit: None

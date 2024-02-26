@@ -96,7 +96,7 @@ def render_rocket_simulation(current_rocket, flight_data, time_step, angle, root
         
         if check_part_type(part, [BodyTube, NoseCone, Decoupler]):
             length_rendered += part.length * zoom
-        
+
     # ALTITUDE REFERENCE LINES
     current_altitude = flight_data['altitude'][time_step-1]
     altitude_line_width = math.ceil(6 * zoom_multiplier)  # Altitude lines get thinner as the camera zooms out to give the illusion of depth

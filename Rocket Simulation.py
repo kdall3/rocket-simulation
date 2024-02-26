@@ -6,11 +6,47 @@ import math
 import os
 import copy
 
+import logging
+import datetime
+
 import geometry
 import db_controller
 import rocket_renderer
 import rocket_simulator
 from rocket_parts import *
+
+
+class Stack():
+    def __init__(self, max_length):
+        self.__stack = []
+        self.__max_length = max_length
+    
+    def push(self, val):
+        if self.size() <= self.__max_length:
+            self.__stack.append(val)
+        else:
+            return False
+    
+    def pop(self):
+        if not self.is_empty():
+            return self.__stack.pop()
+        else:
+            return False
+    
+    def peek(self):
+        if not self.is_empty():
+            return self.__stack[-1]
+        else:
+            return None
+    
+    def size(self):
+        return len(self.__stack)
+    
+    def is_full(self):
+        return self.size() > self.__max_length
+    
+    def is_empty(self):
+        return self.size() == 0
 
 
 class MainMenu():
@@ -279,6 +315,8 @@ class Editor():
         self.force_unit = 'N'
         self.time_unit = 's'
 
+        self.history_stack = Stack(200)
+
         self.create_window()
 
     def create_window(self):
@@ -302,6 +340,8 @@ class Editor():
         self.ui_manager = pygame_gui.UIManager(self.window_dimensions, 'data/themes/editor_theme.json')
 
         label_object_id = pygame_gui.core.ObjectID(class_id='@text_entry_labels')
+
+        self.last_action_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(350, 20, 500, 50), text='Last Action: None', object_id=label_object_id, manager=self.ui_manager)
 
         self.add_part_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(1250, 10, 200, 50), text='Add New Component', manager=self.ui_manager)
         self.add_body_tube_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(1210, 60, 280, 70), text='Body Tube', manager=self.ui_manager)
@@ -572,6 +612,8 @@ class Editor():
                 del self.rocket.parts[position]
                 self.delete_part_from_stages(part)
 
+                self.add_action_to_history(f"deleted part type: {type(part).__name__} id: {part.local_part_id}")
+
     def delete_part_from_stages(self, part):
         for stage in self.rocket.stages:
             if part.local_part_id in stage:
@@ -603,22 +645,26 @@ class Editor():
     def save_design(self):
         self.deselect_all_parts()
         db_controller.save_rocket(self.rocket)
+
+        self.add_action_to_history(f"saved design: {self.rocket.name}")
     
     def load_design(self):
         self.close()
 
         RocketLoader('editor', 'editor')
 
+        self.add_action_to_history(f"loaded design: {self.rocket.name}")
+
     def add_part(self, Part):
         last_body_part_index = self.get_last_part_index_without_child([BodyTube, NoseCone], [])  # With no child blacklist, this will return the last Body Tube or Nose Cone
 
-        # Determine rough length of new part
+        # Determine assumed length of new part
         if last_body_part_index is not None:
             assumed_length = self.rocket.parts[last_body_part_index].length
         else:
             assumed_length = 1  # Default if there are no parts
 
-        # Determine rough diameter of new part
+        # Determine assumed diameter of new part
         if last_body_part_index is not None:
             assumed_diameter = self.rocket.parts[last_body_part_index].diameter
         else:
@@ -650,7 +696,28 @@ class Editor():
                 self.rocket.parts.append(Fins(self.rocket.parts[self.get_last_part_index_without_child([BodyTube, NoseCone], [Fins])].local_part_id, 
                                               local_part_id=self.rocket.new_part_id, length=assumed_length * 0.3))
         
+        self.add_action_to_history(f"add part type: {Part.__name__}, id: {self.rocket.new_part_id}")
+
         self.rocket.new_part_id += 1
+
+    def clear_history(self):
+        while not self.history_stack.is_empty():
+            self.history_stack.pop()
+        
+        self.update_last_action_label()
+    
+    def get_last_action_in_history(self):
+        return self.history_stack.peek()
+    
+    def add_action_to_history(self, action):
+        if self.history_stack.is_full():
+            self.history_stack = Stack()
+        
+        self.history_stack.push(action)
+        self.update_last_action_label()
+    
+    def update_last_action_label(self):
+        self.last_action_label.set_text(f"Last Action: {self.history_stack.peek()}")
 
     def open_info_panel(self):
         self.info_panel_elements = {
@@ -1290,4 +1357,11 @@ class SimulationSettings:
         self.close()
 
 if __name__ == "__main__":
-    MainMenu()
+    logging.basicConfig(filename="error_log.log", encoding='utf-8', level=logging.ERROR)
+    logging.info('Program started')
+
+    try:
+        MainMenu()
+    except:
+        dt = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        logging.exception(f" ({dt})")
