@@ -1,0 +1,59 @@
+ROCKET SIMULATION - Kai Dallison
+
+----- Part Descriptions -----
+
+  Body Tube -
+A hollow cylindrical tube.
+
+  Nose Cone -
+A solid cone.
+
+  Decoupler -
+A cylindrical tube that upon being activated, destroys itself and separates the parts above and below it.
+
+  Engine -
+A cylindrical rocket motor that is placed inside of another part, and propels the rocket upwards upon being activated.
+
+----- Using the rocket editor -----
+
+  Adding parts - 
+Click the buttons on the right hand panel to add parts to the rocket.
+
+  Moving parts -
+Hold left click on a part to drag it to another position in the rocket.
+
+  Selecting parts -
+Right click on a part to open the part editor on the left hand panel, aspects of a part such as length and diameter can be changed here.
+
+  Deleting parts -
+Select a part and click the 'Delete' button in the bottom left hand corner of the screen.
+
+  Stages -
+Parts such as engines and decouplers can be activated during the rocket flight, 
+the order of these activations is controlled by each part's stage, configured in the part editor.
+During the flight, parts will be activated in order of stage (lowest to highest) with each stage ending when there is no engine burning.
+For more details on what each part does upon staging, see the part descriptions.
+
+  Loading a rocket -
+To load a rocket from your device, click the 'Load' button in the editor or the 'Edit Rocket' button on the main menu, the resulting window is
+a list of saved rockets that can be scrolled though using the scroll wheel.
+
+  Saving the rocket -
+To save the rocket to your device, give it a name and click 'Save'. 
+
+  Simulating the rocket -
+To simulate a rocket from the editor, click 'Simulate' (while no part is selected) to simulate the rocket flight and open up the simulation player
+(The rocket will be automatically saved when simulated).
+
+----- Using the simulation player -----
+
+  Playback controls -
+Click the play/pause button to stop/start the playback. Click the fast forward and reverse buttons to speed up/slow down the playback speed
+The circle on the scrollbar can be dragged to get to a specific point in the simulation.
+
+  Zoom controls -
+Click the plus button to zoom in and the minus button to zoom out.
+
+  Using the graphs -
+To open up the graphs display, click the 'Graphs' button. From here the graphs can be saved to the device as an image using the save icon.
+The zoom button can be used to select a section of a graph to zoom in on. The move button can be used to pan a graph to a different section.

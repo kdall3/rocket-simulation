@@ -231,5 +231,3 @@ def get_all_saved_rockets():
         rockets.append(get_rocket(name[0]))
     
     return rockets
-
-reset_db()

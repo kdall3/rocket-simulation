@@ -49,6 +49,57 @@ class Stack():
         return self.size() == 0
 
 
+def check_str_lower(str1, str2):  # Recursive function to check if str1 is before str2 in the alphabet
+        if len(str1) == 0:
+            return True
+        elif len(str2) == 0:
+            return False
+        
+        str1_val = ord(str1[0].upper())
+        str2_val = ord(str2[0].upper())
+
+        if str1_val == str2_val:  # Recursively check the next character along until they are different
+            return check_str_lower(str1[1:], str2[1:])
+        elif str1_val < str2_val:
+            return True
+        elif str1_val > str2_val:
+            return False
+
+
+def sort_rockets(rockets):  # Merge sort algorithm to sort list of rockets by name
+    if len(rockets) <= 1:
+        return rockets
+    
+    middle = len(rockets) // 2
+    L = rockets[:middle]
+    R = rockets[middle:]
+
+    L = sort_rockets(L)
+    R = sort_rockets(R)
+
+    i = 0
+    j = 0
+
+    sorted_list = []
+    while i < len(L) and j < len(R):
+        if check_str_lower(L[i].name, R[j].name):
+            sorted_list.append(L[i])
+            i += 1
+        else:
+            sorted_list.append(R[j])
+            j += 1
+    
+    while i < len(L):
+        sorted_list.append(L[i])
+        i += 1
+
+    while j < len(R):
+        sorted_list.append(R[j])
+        j += 1
+    
+    return sorted_list
+
+
 class MainMenu():
     def __init__(self):
         self.alive = True
@@ -147,6 +198,7 @@ class RocketLoader():
         self.bg_colour = (36, 36, 36)
 
         self.rockets = db_controller.get_all_saved_rockets()
+        self.rockets = sort_rockets(self.rockets)
 
         self.create_window()
     
